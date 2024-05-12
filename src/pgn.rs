@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use bitfield_struct::bitfield;
 
 use crate::{Extended, Id};
@@ -73,7 +74,7 @@ impl Id<Extended> {
     pub const fn group_extension(&self) -> GroupExtension {
         match self.pdu_format() {
             PduFormat::PDU1(_) => GroupExtension::None,
-            PduFormat::PDU2(_padding_bits) => GroupExtension::Some(self.pdu_specific_bits()),
+            PduFormat::PDU2(_) => GroupExtension::Some(self.pdu_specific_bits()),
         }
     }
 
@@ -106,6 +107,21 @@ impl Id<Extended> {
         match self.communication_mode() {
             CommunicationMode::P2P => false,
             CommunicationMode::Broadcast => true,
+        }
+    }
+
+    /// # Errors
+    /// - If PGN is not withing a known valid range.
+    pub fn pdu_assignment(&self) -> Result<PduAssignment, anyhow::Error> {
+        match self.pgn_bits() {
+            0x0000_0000..=0x0000_EE00
+            | 0x0000_F000..=0x0000_FEFF
+            | 0x0001_0000..=0x0001_EE00
+            | 0x0001_F000..=0x0001_FEFF => Ok(PduAssignment::SAE(self.pgn_bits())),
+            0x0000_EF00 | 0x0000_FF00..=0x0000_FFFF | 0x0001_EF00 | 0x0001_FF00..=0x0001_FFFF => {
+                Ok(PduAssignment::MANUFACTURER(self.pgn_bits()))
+            }
+            _ => Err(anyhow!("PGN not within a known valid range!")),
         }
     }
 }
