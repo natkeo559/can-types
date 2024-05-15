@@ -6,6 +6,9 @@ pub trait IdKind {}
 impl IdKind for Standard {}
 impl IdKind for Extended {}
 
+pub type IdExtended = Id<Extended>;
+pub type IdStandard = Id<Standard>;
+
 #[bitfield(u16, order = Msb)]
 pub struct Standard {
     #[bits(5)]
@@ -46,7 +49,7 @@ impl Id<Extended> {
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
-        let bits = u32::from_str_radix(hex_str, 16)?;
+        let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
             return Err(anyhow!(
                 "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF"
@@ -145,7 +148,7 @@ impl Id<Standard> {
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
-        let bits = u16::from_str_radix(hex_str, 16)?;
+        let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
             return Err(anyhow!(
                 "Identifier bits out of range! Valid range is 0x000..0x7FF"
@@ -288,7 +291,7 @@ mod id_tests {
     fn test_standard_from_hex() -> Result<(), anyhow::Error> {
         let hex_str = "000F";
 
-        let id_a: Id<Standard> = Id::<Standard>::from_hex(hex_str)?;
+        let id_a = IdStandard::from_hex(hex_str)?;
 
         assert_eq!(0b00000_000_0_0_001111, id_a.bitfield.0);
         assert_eq!(0, id_a.priority_bits());
@@ -303,7 +306,7 @@ mod id_tests {
     fn test_extended_from_hex() -> Result<(), anyhow::Error> {
         let hex_str = "0CF00400";
 
-        let id_a = Id::<Extended>::from_hex(hex_str)?;
+        let id_a = IdExtended::from_hex(hex_str)?;
 
         assert_eq!(0b00001100111100000000010000000000, id_a.bitfield.0);
         assert_eq!(3, id_a.priority_bits());
@@ -318,7 +321,7 @@ mod id_tests {
     fn test_standard_from_bits() -> Result<(), anyhow::Error> {
         let bits = 15;
 
-        let id_a: Id<Standard> = Id::<Standard>::from_bits(bits)?;
+        let id_a = IdStandard::from_bits(bits)?;
 
         assert_eq!(0b00000_000_0_0_001111, id_a.bitfield.0);
         assert_eq!(0, id_a.priority_bits());
@@ -333,7 +336,7 @@ mod id_tests {
     fn test_extended_from_bits() -> Result<(), anyhow::Error> {
         let bits = 217056256;
 
-        let id_a = Id::<Extended>::from_bits(bits)?;
+        let id_a = IdExtended::from_bits(bits)?;
 
         assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.bitfield.0);
 

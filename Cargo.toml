@@ -1,8 +1,8 @@
 [package]
 name = "can-types"
-version = "0.15.0"
+version = "0.1.4"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.83"
-bitfield-struct = "0.6.1"
+anyhow = {version = "1.0.83", default-features = false}
+bitfield-struct = {version = "0.6.1", default-features = false}
