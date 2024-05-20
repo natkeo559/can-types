@@ -1,14 +1,13 @@
 use anyhow::anyhow;
 use bitfield_struct::bitfield;
 
+/// Trait representing the kind of CAN identifier.
 pub trait IdKind {}
 
 impl IdKind for Standard {}
 impl IdKind for Extended {}
 
-pub type IdExtended = Id<Extended>;
-pub type IdStandard = Id<Standard>;
-
+/// Bitfield representation of a standard 11-bit CAN identifier.
 #[bitfield(u16, order = Msb)]
 pub struct Standard {
     #[bits(5)]
@@ -23,6 +22,7 @@ pub struct Standard {
     pdu_format_bits: u8,
 }
 
+/// Bitfield representation of a 29-bit J1939 CAN identifier.
 #[bitfield(u32, order = Msb)]
 pub struct Extended {
     #[bits(3)]
@@ -41,18 +41,26 @@ pub struct Extended {
     source_address_bits: u8,
 }
 
+/// Represents a Controller Area Network (CAN) identifier.
 pub struct Id<T: IdKind> {
     bitfield: T,
 }
 
-impl Id<Extended> {
+/// Represents a Controller Area Network (CAN) extended 29-bit identifier.
+pub type IdExtended = Id<Extended>;
+/// Represents a Controller Area Network (CAN) standard 11-bit identifier.
+pub type IdStandard = Id<Standard>;
+
+impl IdExtended {
+    /// Creates a new 29-bit identifier from a hexadecimal string representation of the identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
         let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
             return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF"
+                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF - got {}",
+                bits
             ));
         }
         let bitfield = Extended::from_bits(bits);
@@ -60,12 +68,14 @@ impl Id<Extended> {
         Ok(Self { bitfield })
     }
 
+    /// Creates a new 29-bit identifier from the given identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_bits(bits: u32) -> Result<Self, anyhow::Error> {
         if bits > 0x1FFF_FFFF {
             return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF"
+                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF - got {}",
+                bits
             ));
         }
         let bitfield = Extended::from_bits(bits);
@@ -73,6 +83,7 @@ impl Id<Extended> {
         Ok(Self { bitfield })
     }
 
+    /// Returns the raw parts of the 29-bit identifier.
     #[must_use]
     pub const fn into_raw_parts(&self) -> (u8, bool, bool, u8, u8, u8) {
         let p = self.bitfield.priority_bits();
@@ -85,6 +96,7 @@ impl Id<Extended> {
         (p, r, dp, pf, ps, sa)
     }
 
+    /// Creates a new 29-bit identifier from the given raw parts.
     /// # Errors
     /// - If requested priority is out of the valid range for message priorities.
     pub fn from_raw_parts(
@@ -113,45 +125,53 @@ impl Id<Extended> {
         Ok(Self { bitfield })
     }
 
+    /// Retrieves the priority bits of the 29-bit identifier.
     #[must_use]
     pub const fn priority_bits(&self) -> u8 {
         self.bitfield.priority_bits()
     }
 
+    /// Retrieves the reserved bit of the 29-bit identifier.
     #[must_use]
     pub const fn reserved_bits(&self) -> bool {
         self.bitfield.reserved_bits()
     }
 
+    /// Retrieves the data page bit of the 29-bit identifier.
     #[must_use]
     pub const fn data_page_bits(&self) -> bool {
         self.bitfield.data_page_bits()
     }
 
+    /// Retrieves the PDU format bits of the 29-bit identifier.
     #[must_use]
     pub const fn pdu_format_bits(&self) -> u8 {
         self.bitfield.pdu_format_bits()
     }
 
+    /// Retrieves the PDU specific bits of the 29-bit identifier.
     #[must_use]
     pub const fn pdu_specific_bits(&self) -> u8 {
         self.bitfield.pdu_specific_bits()
     }
 
+    /// Retrieves the source address bits of the 29-bit identifier.
     #[must_use]
     pub const fn source_address_bits(&self) -> u8 {
         self.bitfield.source_address_bits()
     }
 }
 
-impl Id<Standard> {
+impl IdStandard {
+    /// Creates a new 11-bit identifier from a hexadecimal string representation of the identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
         let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
             return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x7FF"
+                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {}",
+                bits
             ));
         }
         let bitfield = Standard::from_bits(bits);
@@ -159,12 +179,14 @@ impl Id<Standard> {
         Ok(Self { bitfield })
     }
 
+    /// Creates a new 11-bit identifier from the given identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_bits(bits: u16) -> Result<Self, anyhow::Error> {
         if bits > 0x7FF {
             return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x7FF"
+                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {}",
+                bits
             ));
         }
         let bitfield = Standard::from_bits(bits);
@@ -172,6 +194,7 @@ impl Id<Standard> {
         Ok(Self { bitfield })
     }
 
+    /// Retrieves the raw parts of the 11-bit identifier.
     #[must_use]
     pub const fn into_raw_parts(&self) -> (u8, bool, bool, u8) {
         let p = self.bitfield.priority_bits();
@@ -182,6 +205,7 @@ impl Id<Standard> {
         (p, r, dp, pf)
     }
 
+    /// Creates a new 11-bit identifier from the given raw parts.
     /// # Errors
     /// - If requested priority is out of the valid range for message priorities.
     /// - If requested pdu format is out of the valid range for pdu formats.
@@ -214,21 +238,25 @@ impl Id<Standard> {
         Ok(Self { bitfield })
     }
 
+    /// Retrieves the priority bits of the 11-bit identifier.
     #[must_use]
     pub const fn priority_bits(&self) -> u8 {
         self.bitfield.priority_bits()
     }
 
+    /// Retrieves the reserved bit of the 11-bit identifier.
     #[must_use]
     pub const fn reserved_bits(&self) -> bool {
         self.bitfield.reserved_bits()
     }
 
+    /// Retrieves the data page bit of the 11-bit identifier.
     #[must_use]
     pub const fn data_page_bits(&self) -> bool {
         self.bitfield.data_page_bits()
     }
 
+    /// Retrieves the PDU format bits of the 11-bit identifier.
     #[must_use]
     pub const fn pdu_format_bits(&self) -> u8 {
         self.bitfield.pdu_format_bits()

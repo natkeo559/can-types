@@ -3,34 +3,54 @@ use bitfield_struct::bitfield;
 
 use crate::IdExtended;
 
+/// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, PartialEq, Eq)]
 pub enum PduAssignment {
+    /// Society of Automotive Engineers (SAE) assigned PDU.  
+    /// Contains the PDU value.
     Sae(u32),
+    /// Manufacturer/proprietary assigned PDU.  
+    /// Contains the PDU value.
     Manufacturer(u32),
 }
 
+/// Represents the format of a Protocol Data Unit (PDU).
 #[derive(Debug, PartialEq, Eq)]
 pub enum PduFormat {
+    /// PDU format 1.  
+    /// Contains PDU format value.
     Pdu1(u8),
+    /// PDU format 2.  
+    /// Contains PDU format value.
     Pdu2(u8),
 }
 
+/// Represents the communication mode.
 #[derive(Debug, PartialEq, Eq)]
 pub enum CommunicationMode {
+    /// Point-to-Point communication mode.  
+    /// This PDU communication variant may contain a destination address.
     P2P,
+    /// Broadcast communication mode.  
     Broadcast,
 }
 
+/// Represents the group extension.
 #[derive(Debug, PartialEq, Eq)]
 
 pub enum GroupExtension {
+    /// No group extension.
     None,
+    /// Group extension with a specific value.
     Some(u8),
 }
 
+/// Represents the destination address.
 #[derive(Debug, PartialEq, Eq)]
 pub enum DestinationAddress {
+    /// No destination address.
     None,
+    /// Destination address with a specific value.
     Some(u8),
 }
 
@@ -38,7 +58,6 @@ pub enum DestinationAddress {
 ///
 /// This struct provides a structured representation of the bits composing a PGN, including reserved bits, data page bits,
 /// PDU format bits, and PDU specific bits.
-/// ```
 #[bitfield(u32, order = Msb)]
 pub struct PgnBits {
     #[bits(14)]
@@ -54,6 +73,7 @@ pub struct PgnBits {
 }
 
 impl IdExtended {
+    /// Returns the PGN bits representation as a u32.
     #[must_use]
     pub const fn pgn_bits(&self) -> u32 {
         let pgn_bitfield = PgnBits::new()
@@ -65,6 +85,7 @@ impl IdExtended {
         pgn_bitfield.into_bits()
     }
 
+    /// Returns the PGN bits representation as a bitfield struct.
     #[must_use]
     pub const fn pgn(&self) -> PgnBits {
         PgnBits::new()
@@ -74,6 +95,7 @@ impl IdExtended {
             .with_pdu_specific_bits(self.pdu_specific_bits())
     }
 
+    /// Returns the PDU format.
     #[must_use]
     pub const fn pdu_format(&self) -> PduFormat {
         match (self.pdu_format_bits() < 240, self.pdu_format_bits()) {
@@ -82,6 +104,7 @@ impl IdExtended {
         }
     }
 
+    /// Returns the group extension.
     #[must_use]
     pub const fn group_extension(&self) -> GroupExtension {
         match self.pdu_format() {
@@ -90,6 +113,7 @@ impl IdExtended {
         }
     }
 
+    /// Returns the destination address.
     #[must_use]
     pub const fn destination_address(&self) -> DestinationAddress {
         match self.pdu_format() {
@@ -98,6 +122,7 @@ impl IdExtended {
         }
     }
 
+    /// Returns the communication mode.
     #[must_use]
     pub const fn communication_mode(&self) -> CommunicationMode {
         match self.pdu_format() {
@@ -106,6 +131,7 @@ impl IdExtended {
         }
     }
 
+    /// Checks if the communication mode is Point-to-Point (P2P).
     #[must_use]
     pub const fn is_p2p(&self) -> bool {
         match self.communication_mode() {
@@ -114,6 +140,7 @@ impl IdExtended {
         }
     }
 
+    /// Checks if the communication mode is Broadcast.
     #[must_use]
     pub const fn is_broadcast(&self) -> bool {
         match self.communication_mode() {
@@ -122,10 +149,10 @@ impl IdExtended {
         }
     }
 
-    /// Get the PDU assignment (either SAE or Manufacturer).
-    /// Returns the assignment with the `u32` pgn value.
+    /// Get the PDU assignment (SAE or Manufacturer).
+    /// Returns the assignment with the `u32` PGN value.
     /// # Note
-    /// There are gaps between pgn bit ranges which aren't assignable.
+    /// There are gaps between PGN bit ranges which aren't assignable.
     /// # Errors
     /// - If PGN is not withing a known valid range.
     pub fn pdu_assignment(&self) -> Result<PduAssignment, anyhow::Error> {
@@ -148,7 +175,7 @@ mod pgn_tests {
     use crate::{
         CommunicationMode, DestinationAddress, GroupExtension, IdExtended, PduAssignment, PduFormat,
     };
-    extern crate std;
+
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {
         let id_a = IdExtended::from_hex("18FEF200")?;
