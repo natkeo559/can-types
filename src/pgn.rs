@@ -34,6 +34,11 @@ pub enum DestinationAddress {
     Some(u8),
 }
 
+/// Represents the bit layout of a Parameter Group Number (PGN) within a Controller Area Network (CAN) message or a J1939 message.
+///
+/// This struct provides a structured representation of the bits composing a PGN, including reserved bits, data page bits,
+/// PDU format bits, and PDU specific bits.
+/// ```
 #[bitfield(u32, order = Msb)]
 pub struct PgnBits {
     #[bits(14)]
@@ -57,7 +62,7 @@ impl IdExtended {
             .with_pdu_format_bits(self.pdu_format_bits())
             .with_pdu_specific_bits(self.pdu_specific_bits());
 
-        pgn_bitfield.0
+        pgn_bitfield.into_bits()
     }
 
     #[must_use]
@@ -117,6 +122,10 @@ impl IdExtended {
         }
     }
 
+    /// Get the PDU assignment (either SAE or Manufacturer).
+    /// Returns the assignment with the `u32` pgn value.
+    /// # Note
+    /// There are gaps between pgn bit ranges which aren't assignable.
     /// # Errors
     /// - If PGN is not withing a known valid range.
     pub fn pdu_assignment(&self) -> Result<PduAssignment, anyhow::Error> {
