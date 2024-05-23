@@ -52,6 +52,12 @@ pub type IdExtended = Id<Extended>;
 pub type IdStandard = Id<Standard>;
 
 impl IdExtended {
+    /// Returns the integer representation of the Identifier bitfield
+    #[must_use]
+    pub fn bits(&self) -> u32 {
+        self.bitfield.0
+    }
+
     /// Creates a new 29-bit identifier from a hexadecimal string representation of the identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
@@ -163,6 +169,12 @@ impl IdExtended {
 }
 
 impl IdStandard {
+    /// Returns the integer representation of the Identifier bitfield
+    #[must_use]
+    pub fn bits(&self) -> u16 {
+        self.bitfield.0
+    }
+
     /// Creates a new 11-bit identifier from a hexadecimal string representation of the identifier bits.
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
@@ -281,8 +293,8 @@ mod id_tests {
             .with_data_page_bits(true)
             .with_pdu_format_bits(31);
 
-        assert_eq!(0b00000_000_0_0_000000, id_a.0);
-        assert_eq!(0b00000_011_1_1_011111, id_b.0);
+        assert_eq!(0b00000_000_0_0_000000, id_a.into_bits());
+        assert_eq!(0b00000_011_1_1_011111, id_b.into_bits());
     }
 
     #[test]
@@ -303,15 +315,15 @@ mod id_tests {
             .with_pdu_specific_bits(0)
             .with_source_address_bits(255);
 
-        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.0);
-        assert_eq!(0b000_011_1_1_00001001_00000000_11111111, id_b.0);
+        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
+        assert_eq!(0b000_011_1_1_00001001_00000000_11111111, id_b.into_bits());
     }
 
     #[test]
     fn test_extended_id() -> Result<(), anyhow::Error> {
         let id_a = Id::<Extended>::from_bits(0)?;
 
-        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.bitfield.0);
+        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.bits());
         Ok(())
     }
 
@@ -321,7 +333,7 @@ mod id_tests {
 
         let id_a = IdStandard::from_hex(hex_str)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.bitfield.0);
+        assert_eq!(0b00000_000_0_0_001111, id_a.bits());
         assert_eq!(0, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -336,7 +348,7 @@ mod id_tests {
 
         let id_a = IdExtended::from_hex(hex_str)?;
 
-        assert_eq!(0b00001100111100000000010000000000, id_a.bitfield.0);
+        assert_eq!(0b00001100111100000000010000000000, id_a.bits());
         assert_eq!(3, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -351,7 +363,7 @@ mod id_tests {
 
         let id_a = IdStandard::from_bits(bits)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.bitfield.0);
+        assert_eq!(0b00000_000_0_0_001111, id_a.bits());
         assert_eq!(0, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -366,7 +378,7 @@ mod id_tests {
 
         let id_a = IdExtended::from_bits(bits)?;
 
-        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.bitfield.0);
+        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.bits());
 
         assert_eq!(3, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
