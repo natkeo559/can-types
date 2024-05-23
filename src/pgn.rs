@@ -54,9 +54,11 @@ pub enum DestinationAddress {
     Some(u8),
 }
 
-/// Represents the bit layout of a Parameter Group Number (PGN) within a Controller Area Network (CAN) message or a J1939 message.
+/// Represents the bit layout of a Parameter Group Number (PGN) within a Controller Area Network
+/// (CAN) message or a J1939 message.
 ///
-/// This struct provides a structured representation of the bits composing a PGN, including reserved bits, data page bits,
+/// This struct provides a structured representation of the bits composing a PGN, including
+/// reserved bits, data page bits,
 /// PDU format bits, and PDU specific bits.
 #[bitfield(u32, order = Msb)]
 pub struct PgnBits {
