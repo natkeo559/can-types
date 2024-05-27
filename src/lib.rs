@@ -34,10 +34,12 @@
 
 #![no_std]
 
+pub mod data;
 pub mod identifier;
 pub mod name;
 pub mod pgn;
 
+pub use crate::data::*;
 pub use crate::identifier::*;
 pub use crate::name::*;
 pub use crate::pgn::*;
