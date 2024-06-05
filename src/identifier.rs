@@ -42,6 +42,7 @@ pub struct Extended {
 }
 
 /// Represents a Controller Area Network (CAN) identifier.
+#[derive(Debug)]
 pub struct Id<T: IdKind> {
     bitfield: T,
 }
