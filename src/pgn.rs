@@ -4,7 +4,7 @@ use bitfield_struct::bitfield;
 use crate::IdExtended;
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PduAssignment {
     /// Society of Automotive Engineers (SAE) assigned PDU.  
     /// Contains the PDU value.
@@ -15,7 +15,7 @@ pub enum PduAssignment {
 }
 
 /// Represents the format of a Protocol Data Unit (PDU).
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PduFormat {
     /// PDU format 1.  
     /// Contains PDU format value.
@@ -26,7 +26,7 @@ pub enum PduFormat {
 }
 
 /// Represents the communication mode.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommunicationMode {
     /// Point-to-Point communication mode.  
     /// This PDU communication variant may contain a destination address.
@@ -36,8 +36,7 @@ pub enum CommunicationMode {
 }
 
 /// Represents the group extension.
-#[derive(Debug, PartialEq, Eq)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupExtension {
     /// No group extension.
     None,
@@ -46,7 +45,7 @@ pub enum GroupExtension {
 }
 
 /// Represents the destination address.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DestinationAddress {
     /// No destination address.
     None,
