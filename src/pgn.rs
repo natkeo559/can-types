@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use bitfield_struct::bitfield;
 
 use crate::IdExtended;
@@ -166,7 +165,7 @@ impl IdExtended {
             0x0000_EF00 | 0x0000_FF00..=0x0000_FFFF | 0x0001_EF00 | 0x0001_FF00..=0x0001_FFFF => {
                 Ok(PduAssignment::Manufacturer(self.pgn_bits()))
             }
-            _ => Err(anyhow!("PGN not within a known valid range!")),
+            _ => Err(anyhow::anyhow!("PGN not within a known valid range!")),
         }
     }
 }

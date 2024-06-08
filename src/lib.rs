@@ -13,7 +13,7 @@
 //!         // Hex to J1939 Identifier
 //!         let id_a = IdExtended::from_hex("0CF00400")?;
 //!
-//!         assert_eq!(0b00001100111100000000010000000000, id_a.bits());
+//!         assert_eq!(0b00001100111100000000010000000000, id_a.to_bits());
 //!         assert_eq!(3, id_a.priority_bits());
 //!         assert_eq!(false, id_a.reserved_bits());
 //!         assert_eq!(false, id_a.data_page_bits());

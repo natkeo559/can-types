@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use bitfield_struct::bitfield;
 
 /// Trait representing the kind of CAN identifier.
@@ -55,7 +54,7 @@ pub type IdStandard = Id<Standard>;
 impl IdExtended {
     /// Returns the integer representation of the Identifier bitfield
     #[must_use]
-    pub fn bits(&self) -> u32 {
+    pub fn to_bits(&self) -> u32 {
         self.bitfield.0
     }
 
@@ -67,8 +66,8 @@ impl IdExtended {
         base16ct::upper::decode(hex_str, &mut buf).map_err(anyhow::Error::msg)?;
         let bits = u32::from_be_bytes(buf);
         if bits > 0x1FFF_FFFF {
-            return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF - got {}",
+            Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0x00000000..0x1FFFFFFF - got {:#08X}",
                 bits
             ))
         } else {
@@ -84,7 +83,8 @@ impl IdExtended {
     /// - If resulting hex bytes are not UTF-8
     pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
         static mut BUFFER: [u8; 8] = [0; 8];
-        let hex_bytes = base16ct::upper::encode(&self.bits().to_be_bytes(), unsafe { &mut BUFFER })
+        let hex_bytes =
+            base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
             .map_err(anyhow::Error::msg)?;
         let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
         Ok(hex_str)
@@ -95,8 +95,8 @@ impl IdExtended {
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_bits(bits: u32) -> Result<Self, anyhow::Error> {
         if bits > 0x1FFF_FFFF {
-            return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF - got {}",
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0..536870911 - got {}",
                 bits
             ));
         }
@@ -187,7 +187,7 @@ impl IdExtended {
 impl IdStandard {
     /// Returns the integer representation of the Identifier bitfield
     #[must_use]
-    pub fn bits(&self) -> u16 {
+    pub fn to_bits(&self) -> u16 {
         self.bitfield.0
     }
 
@@ -197,8 +197,8 @@ impl IdStandard {
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
         let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
-            return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {}",
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {:#03X}",
                 bits
             ));
         }
@@ -213,7 +213,8 @@ impl IdStandard {
     /// - If resulting hex bytes are not UTF-8
     pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
         static mut BUFFER: [u8; 4] = [0; 4];
-        let hex_bytes = base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
+        let hex_bytes =
+            base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
             .map_err(anyhow::Error::msg)?;
         let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
         Ok(&hex_str[1..])
@@ -224,8 +225,8 @@ impl IdStandard {
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_bits(bits: u16) -> Result<Self, anyhow::Error> {
         if bits > 0x7FF {
-            return Err(anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {}",
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0..2047 - got {}",
                 bits
             ));
         }
@@ -351,17 +352,17 @@ mod id_tests {
     fn test_extended_id() -> Result<(), anyhow::Error> {
         let id_a = Id::<Extended>::from_bits(0)?;
 
-        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.bits());
+        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.to_bits());
         Ok(())
     }
 
     #[test]
     fn test_standard_from_hex() -> Result<(), anyhow::Error> {
-        let hex_str = "000F";
+        let hex_str = "00F";
 
         let id_a = IdStandard::from_hex(hex_str)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.bits());
+        assert_eq!(0b00000_000_0_0_001111, id_a.to_bits());
         assert_eq!(0, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -387,7 +388,7 @@ mod id_tests {
 
         let id_a = IdExtended::from_hex(hex_str)?;
 
-        assert_eq!(0b00001100111100000000010000000000, id_a.bits());
+        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.to_bits());
         assert_eq!(3, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -402,7 +403,7 @@ mod id_tests {
 
         let id_a = IdStandard::from_bits(bits)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.bits());
+        assert_eq!(0b00000_000_0_0_001111, id_a.to_bits());
         assert_eq!(0, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
@@ -417,7 +418,7 @@ mod id_tests {
 
         let id_a = IdExtended::from_bits(bits)?;
 
-        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.bits());
+        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.to_bits());
 
         assert_eq!(3, id_a.priority_bits());
         assert_eq!(false, id_a.reserved_bits());
