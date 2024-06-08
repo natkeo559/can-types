@@ -63,16 +63,31 @@ impl IdExtended {
     /// # Errors
     /// - If requested identifier is out of the valid range for identifiers.
     pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
-        let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
+        let mut buf = [0; 4];
+        base16ct::upper::decode(hex_str, &mut buf).map_err(anyhow::Error::msg)?;
+        let bits = u32::from_be_bytes(buf);
         if bits > 0x1FFF_FFFF {
             return Err(anyhow!(
                 "Identifier bits out of range! Valid range is 0x000..0x1FFFFFFF - got {}",
                 bits
-            ));
+            ))
+        } else {
+            Ok(Self {
+                bitfield: Extended::from_bits(bits),
+            })
         }
-        let bitfield = Extended::from_bits(bits);
+    }
 
-        Ok(Self { bitfield })
+    /// Creates a new hexidecimal string representing the 29-bit identifier.
+    /// # Errors
+    /// - If insufficient destination buffer length (function assumes 8 bytes)
+    /// - If resulting hex bytes are not UTF-8
+    pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
+        static mut BUFFER: [u8; 8] = [0; 8];
+        let hex_bytes = base16ct::upper::encode(&self.bits().to_be_bytes(), unsafe { &mut BUFFER })
+            .map_err(anyhow::Error::msg)?;
+        let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
+        Ok(hex_str)
     }
 
     /// Creates a new 29-bit identifier from the given identifier bits.
@@ -190,6 +205,18 @@ impl IdStandard {
         let bitfield = Standard::from_bits(bits);
 
         Ok(Self { bitfield })
+    }
+
+    /// Creates a new hexidecimal string representing the 29-bit identifier.
+    /// # Errors
+    /// - If insufficient destination buffer length (function assumes 8 bytes)
+    /// - If resulting hex bytes are not UTF-8
+    pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
+        static mut BUFFER: [u8; 4] = [0; 4];
+        let hex_bytes = base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
+            .map_err(anyhow::Error::msg)?;
+        let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
+        Ok(&hex_str[1..])
     }
 
     /// Creates a new 11-bit identifier from the given identifier bits.
@@ -344,6 +371,17 @@ mod id_tests {
     }
 
     #[test]
+    fn test_standard_to_hex() -> Result<(), anyhow::Error> {
+        let id_dec = 15;
+        let id_hex = "00F";
+        let id_a = IdStandard::from_bits(id_dec)?;
+
+        assert_eq!(id_hex, id_a.to_hex()?);
+
+        Ok(())
+    }
+
+    #[test]
     fn test_extended_from_hex() -> Result<(), anyhow::Error> {
         let hex_str = "0CF00400";
 
@@ -385,6 +423,17 @@ mod id_tests {
         assert_eq!(false, id_a.reserved_bits());
         assert_eq!(false, id_a.data_page_bits());
         assert_eq!(240, id_a.pdu_format_bits());
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_extended_to_hex() -> Result<(), anyhow::Error> {
+        let id_dec = 217056256;
+        let id_hex = "0CF00400";
+        let id_a = IdExtended::from_bits(id_dec)?;
+
+        assert_eq!(id_hex, id_a.to_hex()?);
 
         Ok(())
     }
