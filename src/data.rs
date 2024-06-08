@@ -19,7 +19,7 @@ impl Data {
 
     /// Return the data bits as a u64 integer
     #[must_use]
-    pub const fn bits(&self) -> u64 {
+    pub const fn to_bits(&self) -> u64 {
         self.0
     }
 
@@ -82,7 +82,7 @@ mod data_tests {
         assert_eq!(be_bytes_a, data_a.to_be_bytes());
         assert_eq!(le_bytes_a, data_a.to_le_bytes());
 
-        assert_eq!(18446606493475143679, data_a.bits());
+        assert_eq!(18446606493475143679, data_a.to_bits());
 
         assert_eq!(Data(18446743089616977919), data_a.to_be());
         assert_eq!(Data(18446606493475143679), data_a.to_le());
