@@ -85,7 +85,7 @@ impl IdExtended {
         static mut BUFFER: [u8; 8] = [0; 8];
         let hex_bytes =
             base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
-            .map_err(anyhow::Error::msg)?;
+                .map_err(anyhow::Error::msg)?;
         let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
         Ok(hex_str)
     }
@@ -103,6 +103,13 @@ impl IdExtended {
         let bitfield = Extended::from_bits(bits);
 
         Ok(Self { bitfield })
+    }
+
+    /// Creates an error identifier.
+    #[must_use]
+    pub fn error() -> Self {
+        let bitfield = Extended::from_bits(0xFFFF_FFFF);
+        Self { bitfield }
     }
 
     /// Returns the raw parts of the 29-bit identifier.
@@ -215,7 +222,7 @@ impl IdStandard {
         static mut BUFFER: [u8; 4] = [0; 4];
         let hex_bytes =
             base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
-            .map_err(anyhow::Error::msg)?;
+                .map_err(anyhow::Error::msg)?;
         let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
         Ok(&hex_str[1..])
     }
@@ -233,6 +240,13 @@ impl IdStandard {
         let bitfield = Standard::from_bits(bits);
 
         Ok(Self { bitfield })
+    }
+
+    /// Creates an error identifier.
+    #[must_use]
+    pub fn error() -> Self {
+        let bitfield = Standard::from_bits(0xFFF);
+        Self { bitfield }
     }
 
     /// Retrieves the raw parts of the 11-bit identifier.
