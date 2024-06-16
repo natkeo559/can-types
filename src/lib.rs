@@ -6,27 +6,27 @@
 //! ## Examples
 //!
 //! ```rust,no_run
-//!     use can_types::{IdExtended, CommunicationMode, GroupExtension};
+//!     use can_types::prelude::*;
 //!
 //!     fn main() -> Result<(), anyhow::Error> {
 //!
 //!         // Hex to J1939 Identifier
-//!         let id_a = IdExtended::from_hex("0CF00400")?;
+//!         let id_a = IdExtended::try_from_hex("0CF00400")?;
 //!
-//!         assert_eq!(0b00001100111100000000010000000000, id_a.to_bits());
-//!         assert_eq!(3, id_a.priority_bits());
-//!         assert_eq!(false, id_a.reserved_bits());
-//!         assert_eq!(false, id_a.data_page_bits());
-//!         assert_eq!(240, id_a.pdu_format_bits());   
+//!         assert_eq!(0b00001100111100000000010000000000, id_a.try_into_bits()?);
+//!         assert_eq!(3, id_a.priority());
+//!         assert_eq!(false, id_a.reserved());
+//!         assert_eq!(false, id_a.data_page());
+//!         assert_eq!(240, id_a.pdu_format());   
 //!         
 //!         // Decode J1939 PGN
-//!         let id_b = IdExtended::from_hex("18FEF200")?;
-//!         let id_c = IdExtended::from_hex("0C00290B")?;
+//!         let id_b = IdExtended::try_from_hex("18FEF200")?;
+//!         let id_c = IdExtended::try_from_hex("0C00290B")?;
 //!         
-//!         assert_eq!(CommunicationMode::Broadcast, id_b.communication_mode());
-//!         assert_eq!(CommunicationMode::P2P, id_c.communication_mode());
-//!         assert_eq!(GroupExtension::Some(242), id_b.group_extension());
-//!         assert_eq!(GroupExtension::None, id_c.group_extension());
+//!         assert_eq!(CommunicationMode::Broadcast, id_b.pgn().communication_mode());
+//!         assert_eq!(CommunicationMode::P2P, id_c.pgn().communication_mode());
+//!         assert_eq!(GroupExtension::Some(242), id_b.pgn().group_extension());
+//!         assert_eq!(GroupExtension::None, id_c.pgn().group_extension());
 //!
 //!         Ok(())
 //!     }
@@ -34,12 +34,31 @@
 
 #![no_std]
 
+macro_rules! if_alloc {
+    ($($i:item)*) => ($(
+        #[cfg(feature = "alloc")] $i
+    )*)
+}
+
+if_alloc! {
+    extern crate alloc;
+}
+
+pub mod conversion;
 pub mod data;
 pub mod identifier;
+pub mod message;
 pub mod name;
 pub mod pgn;
 
-pub use crate::data::*;
-pub use crate::identifier::*;
-pub use crate::name::*;
-pub use crate::pgn::*;
+pub mod prelude {
+    pub use crate::conversion::*;
+    pub use crate::data::*;
+    pub use crate::identifier::*;
+    pub use crate::message::*;
+    pub use crate::name::*;
+    pub use crate::pgn::*;
+    if_alloc! {
+        pub use alloc::string::String;
+    }
+}

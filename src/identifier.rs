@@ -1,6 +1,11 @@
+if_alloc! {
+    use crate::prelude::String;
+}
+
 use bitfield_struct::bitfield;
 
-/// Trait representing the kind of CAN identifier.
+use crate::conversion::Conversion;
+
 pub trait IdKind {}
 
 impl IdKind for Standard {}
@@ -42,92 +47,234 @@ pub struct Extended {
 
 /// Represents a Controller Area Network (CAN) identifier.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Id<T: IdKind> {
-    bitfield: T,
-}
+pub struct Id<T: IdKind>(T);
 
 /// Represents a Controller Area Network (CAN) extended 29-bit identifier.
 pub type IdExtended = Id<Extended>;
+
 /// Represents a Controller Area Network (CAN) standard 11-bit identifier.
 pub type IdStandard = Id<Standard>;
 
-impl IdExtended {
-    /// Returns the integer representation of the Identifier bitfield
-    #[must_use]
-    pub fn to_bits(&self) -> u32 {
-        self.bitfield.0
+impl Conversion<u32> for IdExtended {
+    type Error = anyhow::Error;
+
+    /// Creates a new 32-bit integer from the `IdExtended` bitfield.
+    /// # Errors
+    /// - Never (conversion is trivial)
+    fn try_into_bits(self) -> Result<u32, Self::Error> {
+        Ok(self.0.into_bits())
     }
 
-    /// Creates a new 29-bit identifier from a hexadecimal string representation of the identifier bits.
+    /// Creates a new base-16 (hex) `String` from the `IdExtended` bitfield.
     /// # Errors
-    /// - If requested identifier is out of the valid range for identifiers.
-    pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
-        let mut buf = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buf).map_err(anyhow::Error::msg)?;
-        let bits = u32::from_be_bytes(buf);
-        if bits > 0x1FFF_FFFF {
-            Err(anyhow::anyhow!(
-                "Identifier bits out of range! Valid range is 0x00000000..0x1FFFFFFF - got {:#08X}",
-                bits
-            ))
-        } else {
-            Ok(Self {
-                bitfield: Extended::from_bits(bits),
-            })
-        }
-    }
-
-    /// Creates a new hexidecimal string representing the 29-bit identifier.
-    /// # Errors
-    /// - If insufficient destination buffer length (function assumes 8 bytes)
-    /// - If resulting hex bytes are not UTF-8
-    pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
-        static mut BUFFER: [u8; 8] = [0; 8];
-        let hex_bytes =
-            base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn try_into_hex(self) -> Result<String, Self::Error> {
+        let mut buffer: [u8; 8] = [b'0'; 8];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
-        let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
-        Ok(hex_str)
+        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
     }
 
-    /// Creates a new 29-bit identifier from the given identifier bits.
+    /// Creates a new `IdExtended` bitfield from a 32-bit integer.
     /// # Errors
-    /// - If requested identifier is out of the valid range for identifiers.
-    pub fn from_bits(bits: u32) -> Result<Self, anyhow::Error> {
+    /// - If value out of range for valid 29-bit identifiers
+    fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         if bits > 0x1FFF_FFFF {
             return Err(anyhow::anyhow!(
                 "Identifier bits out of range! Valid range is 0..536870911 - got {}",
                 bits
             ));
         }
-        let bitfield = Extended::from_bits(bits);
+        let bitfield: Extended = Extended(bits);
 
-        Ok(Self { bitfield })
+        Ok(Self(bitfield))
     }
 
-    /// Creates an error identifier.
-    #[must_use]
-    pub fn error() -> Self {
-        let bitfield = Extended::from_bits(0xFFFF_FFFF);
-        Self { bitfield }
+    /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// - If value out of range for valid 29-bit identifiers
+    fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
+        let bits: u32 = u32::from_be_bytes(buffer);
+        if bits > 0x1FFF_FFFF {
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0x00000000..0x1FFFFFFF - got {:#08X}",
+                bits
+            ));
+        }
+        let bitfield: Extended = Extended(bits);
+
+        Ok(Self(bitfield))
     }
 
-    /// Returns the raw parts of the 29-bit identifier.
+    /// Creates a new 32-bit integer from the `IdExtended` bitfield.
+    fn into_bits(self) -> u32 {
+        self.0.into_bits()
+    }
+
+    /// Creates a new base-16 (hex) `String` from the `IdExtended` bitfield.
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn into_hex(self) -> String {
+        let mut buffer: [u8; 8] = [b'0'; 8];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.0.into_bits().to_be_bytes(), &mut buffer)
+                .unwrap_or_default();
+        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+    }
+
+    /// Creates a new `IdExtended` bitfield from a 32-bit integer.
+    fn from_bits(bits: u32) -> Self {
+        let bitfield: Extended = Extended(bits);
+
+        Self(bitfield)
+    }
+
+    /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
+        let bits: u32 = u32::from_be_bytes(buffer);
+        let bitfield: Extended = Extended::from_bits(bits);
+
+        Self(bitfield)
+    }
+}
+
+impl Conversion<u16> for IdStandard {
+    type Error = anyhow::Error;
+
+    /// Creates a new 16-bit integer from the `IdStandard` bitfield.
+    /// # Errors
+    /// - Never (conversion is trivial)
+    #[allow(clippy::useless_conversion)]
+    fn try_into_bits(self) -> Result<u16, Self::Error> {
+        self.0.into_bits().try_into().map_err(anyhow::Error::msg)
+    }
+
+    /// Creates a new base-16 (hex) `String` from the `IdStandard` bitfield.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn try_into_hex(self) -> Result<String, Self::Error> {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
+                .map_err(anyhow::Error::msg)?;
+        String::from_utf8(hex_bytes.to_vec())
+            .map_err(anyhow::Error::msg)
+            .map(|mut s| {
+                s.drain(..1);
+                s
+            })
+    }
+
+    /// Creates a new `IdStandard` bitfield from a 16-bit integer.
+    /// # Errors
+    /// - If value out of range for valid 11-bit identifiers
+    fn try_from_bits(bits: u16) -> Result<Self, Self::Error> {
+        if bits > 0x7FF {
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0..2047 - got {}",
+                bits
+            ));
+        }
+        let bitfield: Standard = Standard(bits);
+
+        Ok(Self(bitfield))
+    }
+
+    /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// - If value out of range for valid 11-bit identifiers
+    fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
+        let mut output_buf: [u8; 2] = [b'0'; 2];
+        let mut input_buf: [u8; 4] = [b'0'; 4];
+
+        // padding the hex bytes since decode expects even size buf
+        for (c, buf) in hex_str.chars().rev().zip(input_buf.iter_mut().rev()) {
+            *buf = c as u8;
+        }
+
+        base16ct::upper::decode(input_buf, &mut output_buf).map_err(anyhow::Error::msg)?;
+        let bits: u16 = u16::from_be_bytes(output_buf);
+        if bits > 0x7FF {
+            return Err(anyhow::anyhow!(
+                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {:#03X}",
+                bits
+            ));
+        }
+        let bitfield: Standard = Standard(bits);
+
+        Ok(Self(bitfield))
+    }
+
+    /// Creates a new 16-bit integer from the `IdStandard` bitfield.
+    fn into_bits(self) -> u16 {
+        self.0.into_bits()
+    }
+
+    /// Creates a new base-16 (hex) `String` from the `IdStandard` bitfield.
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn into_hex(self) -> String {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
+                .unwrap_or_default();
+        let mut output = String::from_utf8(hex_bytes.to_vec()).unwrap_or_default();
+        output.drain(..1);
+
+        output
+    }
+
+    /// Creates a new `IdStandard` bitfield from a 16-bit integer.
+    fn from_bits(bits: u16) -> Self {
+        let bitfield: Standard = Standard(bits);
+
+        Self(bitfield)
+    }
+
+    /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let mut buffer: [u8; 2] = [b'0'; 2];
+        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
+        let bits: u16 = u16::from_be_bytes(buffer);
+        let bitfield: Standard = Standard(bits);
+        Self(bitfield)
+    }
+}
+
+impl IdExtended {
     #[must_use]
-    pub const fn into_raw_parts(&self) -> (u8, bool, bool, u8, u8, u8) {
-        let p = self.bitfield.priority_bits();
-        let r = self.bitfield.reserved_bits();
-        let dp = self.bitfield.data_page_bits();
-        let pf = self.bitfield.pdu_format_bits();
-        let ps = self.bitfield.pdu_specific_bits();
-        let sa = self.bitfield.source_address_bits();
+    pub const fn into_raw_parts(self) -> (u8, bool, bool, u8, u8, u8) {
+        let p = self.0.priority_bits();
+        let r = self.0.reserved_bits();
+        let dp = self.0.data_page_bits();
+        let pf = self.0.pdu_format_bits();
+        let ps = self.0.pdu_specific_bits();
+        let sa = self.0.source_address_bits();
 
         (p, r, dp, pf, ps, sa)
     }
 
-    /// Creates a new 29-bit identifier from the given raw parts.
     /// # Errors
-    /// - If requested priority is out of the valid range for message priorities.
+    /// - If priority value is invalid
     pub fn from_raw_parts(
         priority: u8,
         reserved: bool,
@@ -151,119 +298,54 @@ impl IdExtended {
             .with_pdu_specific_bits(pdu_specific)
             .with_source_address_bits(source_addr);
 
-        Ok(Self { bitfield })
+        Ok(Self(bitfield))
     }
 
-    /// Retrieves the priority bits of the 29-bit identifier.
     #[must_use]
-    pub const fn priority_bits(&self) -> u8 {
-        self.bitfield.priority_bits()
+    pub const fn priority(&self) -> u8 {
+        self.0.priority_bits()
     }
 
-    /// Retrieves the reserved bit of the 29-bit identifier.
     #[must_use]
-    pub const fn reserved_bits(&self) -> bool {
-        self.bitfield.reserved_bits()
+    pub const fn reserved(&self) -> bool {
+        self.0.reserved_bits()
     }
 
-    /// Retrieves the data page bit of the 29-bit identifier.
     #[must_use]
-    pub const fn data_page_bits(&self) -> bool {
-        self.bitfield.data_page_bits()
+    pub const fn data_page(&self) -> bool {
+        self.0.data_page_bits()
     }
 
-    /// Retrieves the PDU format bits of the 29-bit identifier.
     #[must_use]
-    pub const fn pdu_format_bits(&self) -> u8 {
-        self.bitfield.pdu_format_bits()
+    pub const fn pdu_format(&self) -> u8 {
+        self.0.pdu_format_bits()
     }
 
-    /// Retrieves the PDU specific bits of the 29-bit identifier.
     #[must_use]
-    pub const fn pdu_specific_bits(&self) -> u8 {
-        self.bitfield.pdu_specific_bits()
+    pub const fn pdu_specific(&self) -> u8 {
+        self.0.pdu_specific_bits()
     }
 
-    /// Retrieves the source address bits of the 29-bit identifier.
     #[must_use]
-    pub const fn source_address_bits(&self) -> u8 {
-        self.bitfield.source_address_bits()
+    pub const fn source_address(&self) -> u8 {
+        self.0.source_address_bits()
     }
 }
 
 impl IdStandard {
-    /// Returns the integer representation of the Identifier bitfield
     #[must_use]
-    pub fn to_bits(&self) -> u16 {
-        self.bitfield.0
-    }
-
-    /// Creates a new 11-bit identifier from a hexadecimal string representation of the identifier bits.
-    /// # Errors
-    /// - If requested identifier is out of the valid range for identifiers.
-    pub fn from_hex(hex_str: &str) -> Result<Self, anyhow::Error> {
-        let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
-        if bits > 0x7FF {
-            return Err(anyhow::anyhow!(
-                "Identifier bits out of range! Valid range is 0x000..0x7FF - got {:#03X}",
-                bits
-            ));
-        }
-        let bitfield = Standard::from_bits(bits);
-
-        Ok(Self { bitfield })
-    }
-
-    /// Creates a new hexidecimal string representing the 29-bit identifier.
-    /// # Errors
-    /// - If insufficient destination buffer length (function assumes 8 bytes)
-    /// - If resulting hex bytes are not UTF-8
-    pub fn to_hex<'a>(&self) -> Result<&'a str, anyhow::Error> {
-        static mut BUFFER: [u8; 4] = [0; 4];
-        let hex_bytes =
-            base16ct::upper::encode(&self.to_bits().to_be_bytes(), unsafe { &mut BUFFER })
-                .map_err(anyhow::Error::msg)?;
-        let hex_str = core::str::from_utf8(hex_bytes).map_err(anyhow::Error::msg)?;
-        Ok(&hex_str[1..])
-    }
-
-    /// Creates a new 11-bit identifier from the given identifier bits.
-    /// # Errors
-    /// - If requested identifier is out of the valid range for identifiers.
-    pub fn from_bits(bits: u16) -> Result<Self, anyhow::Error> {
-        if bits > 0x7FF {
-            return Err(anyhow::anyhow!(
-                "Identifier bits out of range! Valid range is 0..2047 - got {}",
-                bits
-            ));
-        }
-        let bitfield = Standard::from_bits(bits);
-
-        Ok(Self { bitfield })
-    }
-
-    /// Creates an error identifier.
-    #[must_use]
-    pub fn error() -> Self {
-        let bitfield = Standard::from_bits(0xFFF);
-        Self { bitfield }
-    }
-
-    /// Retrieves the raw parts of the 11-bit identifier.
-    #[must_use]
-    pub const fn into_raw_parts(&self) -> (u8, bool, bool, u8) {
-        let p = self.bitfield.priority_bits();
-        let r = self.bitfield.reserved_bits();
-        let dp = self.bitfield.data_page_bits();
-        let pf = self.bitfield.pdu_format_bits();
+    pub const fn into_raw_parts(self) -> (u8, bool, bool, u8) {
+        let p = self.0.priority_bits();
+        let r = self.0.reserved_bits();
+        let dp = self.0.data_page_bits();
+        let pf = self.0.pdu_format_bits();
 
         (p, r, dp, pf)
     }
 
-    /// Creates a new 11-bit identifier from the given raw parts.
     /// # Errors
-    /// - If requested priority is out of the valid range for message priorities.
-    /// - If requested pdu format is out of the valid range for pdu formats.
+    /// - If priority value is invalid
+    /// - If PDU Format value is invalid
     pub fn from_raw_parts(
         priority: u8,
         reserved: bool,
@@ -290,31 +372,27 @@ impl IdStandard {
             .with_data_page_bits(data_page)
             .with_pdu_format_bits(pdu_format);
 
-        Ok(Self { bitfield })
+        Ok(Self(bitfield))
     }
 
-    /// Retrieves the priority bits of the 11-bit identifier.
     #[must_use]
-    pub const fn priority_bits(&self) -> u8 {
-        self.bitfield.priority_bits()
+    pub const fn priority(&self) -> u8 {
+        self.0.priority_bits()
     }
 
-    /// Retrieves the reserved bit of the 11-bit identifier.
     #[must_use]
-    pub const fn reserved_bits(&self) -> bool {
-        self.bitfield.reserved_bits()
+    pub const fn reserved(&self) -> bool {
+        self.0.reserved_bits()
     }
 
-    /// Retrieves the data page bit of the 11-bit identifier.
     #[must_use]
-    pub const fn data_page_bits(&self) -> bool {
-        self.bitfield.data_page_bits()
+    pub const fn data_page(&self) -> bool {
+        self.0.data_page_bits()
     }
 
-    /// Retrieves the PDU format bits of the 11-bit identifier.
     #[must_use]
-    pub const fn pdu_format_bits(&self) -> u8 {
-        self.bitfield.pdu_format_bits()
+    pub const fn pdu_format(&self) -> u8 {
+        self.0.pdu_format_bits()
     }
 }
 
@@ -363,10 +441,24 @@ mod id_tests {
     }
 
     #[test]
-    fn test_extended_id() -> Result<(), anyhow::Error> {
-        let id_a = Id::<Extended>::from_bits(0)?;
+    fn test_extended_try_from_bits() -> Result<(), anyhow::Error> {
+        let id_a = Id::<Extended>::try_from_bits(0)?;
+        let id_b = Id::<Extended>::try_from_bits(4294967295);
 
-        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.to_bits());
+        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
+        assert!(id_b.is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_extended_from_bits() -> Result<(), anyhow::Error> {
+        let id_a = Id::<Extended>::from_bits(0);
+        let id_b = Id::<Extended>::from_bits(4294967295);
+
+        assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
+        assert_eq!(0b111_111_1_1_11111111_11111111_11111111, id_b.into_bits());
+
         Ok(())
     }
 
@@ -374,24 +466,25 @@ mod id_tests {
     fn test_standard_from_hex() -> Result<(), anyhow::Error> {
         let hex_str = "00F";
 
-        let id_a = IdStandard::from_hex(hex_str)?;
+        let id_a = IdStandard::try_from_hex(hex_str)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.to_bits());
-        assert_eq!(0, id_a.priority_bits());
-        assert_eq!(false, id_a.reserved_bits());
-        assert_eq!(false, id_a.data_page_bits());
-        assert_eq!(15, id_a.pdu_format_bits());
+        assert_eq!(0b00000_000_0_0_001111, id_a.try_into_bits()?);
+        assert_eq!(0, id_a.priority());
+        assert_eq!(false, id_a.reserved());
+        assert_eq!(false, id_a.data_page());
+        assert_eq!(15, id_a.pdu_format());
 
         Ok(())
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn test_standard_to_hex() -> Result<(), anyhow::Error> {
         let id_dec = 15;
         let id_hex = "00F";
-        let id_a = IdStandard::from_bits(id_dec)?;
+        let id_a = IdStandard::try_from_bits(id_dec)?;
 
-        assert_eq!(id_hex, id_a.to_hex()?);
+        assert_eq!(id_hex, id_a.try_into_hex()?);
 
         Ok(())
     }
@@ -400,13 +493,16 @@ mod id_tests {
     fn test_extended_from_hex() -> Result<(), anyhow::Error> {
         let hex_str = "0CF00400";
 
-        let id_a = IdExtended::from_hex(hex_str)?;
+        let id_a = IdExtended::try_from_hex(hex_str)?;
 
-        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.to_bits());
-        assert_eq!(3, id_a.priority_bits());
-        assert_eq!(false, id_a.reserved_bits());
-        assert_eq!(false, id_a.data_page_bits());
-        assert_eq!(240, id_a.pdu_format_bits());
+        assert_eq!(
+            0b000_011_0_0_11110000_00000100_00000000,
+            id_a.try_into_bits()?
+        );
+        assert_eq!(3, id_a.priority());
+        assert_eq!(false, id_a.reserved());
+        assert_eq!(false, id_a.data_page());
+        assert_eq!(240, id_a.pdu_format());
 
         Ok(())
     }
@@ -415,41 +511,31 @@ mod id_tests {
     fn test_standard_from_bits() -> Result<(), anyhow::Error> {
         let bits = 15;
 
-        let id_a = IdStandard::from_bits(bits)?;
+        let id_a = IdStandard::try_from_bits(bits)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.to_bits());
-        assert_eq!(0, id_a.priority_bits());
-        assert_eq!(false, id_a.reserved_bits());
-        assert_eq!(false, id_a.data_page_bits());
-        assert_eq!(15, id_a.pdu_format_bits());
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_extended_from_bits() -> Result<(), anyhow::Error> {
-        let bits = 217056256;
-
-        let id_a = IdExtended::from_bits(bits)?;
-
-        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.to_bits());
-
-        assert_eq!(3, id_a.priority_bits());
-        assert_eq!(false, id_a.reserved_bits());
-        assert_eq!(false, id_a.data_page_bits());
-        assert_eq!(240, id_a.pdu_format_bits());
+        assert_eq!(0b00000_000_0_0_001111, id_a.try_into_bits()?);
+        assert_eq!(0, id_a.priority());
+        assert_eq!(false, id_a.reserved());
+        assert_eq!(false, id_a.data_page());
+        assert_eq!(15, id_a.pdu_format());
 
         Ok(())
     }
 
     #[test]
-    pub fn test_extended_to_hex() -> Result<(), anyhow::Error> {
+    #[cfg(feature = "alloc")]
+    fn test_extended_to_hex() -> Result<(), anyhow::Error> {
         let id_dec = 217056256;
         let id_hex = "0CF00400";
-        let id_a = IdExtended::from_bits(id_dec)?;
+        let id_a = IdExtended::try_from_bits(id_dec)?;
 
-        assert_eq!(id_hex, id_a.to_hex()?);
+        assert_eq!(id_hex, id_a.try_into_hex()?);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_id2() -> Result<(), anyhow::Error> {
         Ok(())
     }
 }

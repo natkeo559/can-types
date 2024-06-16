@@ -65,7 +65,6 @@ dependencies = [
  "anyhow",
  "base16ct",
  "bitfield-struct",
- "const-hex",
  "criterion",
 ]
 
@@ -132,25 +131,6 @@ name = "clap_lex"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b82cf0babdbd58558212896d1a4272303a57bdb245c2bf1147185fb45640e70"
-
-[[package]]
-name = "const-hex"
-version = "1.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94fb8a24a26d37e1ffd45343323dc9fe6654ceea44c12f2fcb3d7ac29e610bc6"
-dependencies = [
- "cfg-if",
- "cpufeatures",
-]
-
-[[package]]
-name = "cpufeatures"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53fe5e26ff1b7aef8bca9c6080520cfb8d9333c7568e1829cef191a9723e5504"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "criterion"
