@@ -1,6 +1,10 @@
+if_alloc! {
+    use crate::prelude::String;
+}
+
 use bitfield_struct::bitfield;
 
-use crate::IdExtended;
+use crate::{conversion::Conversion, identifier::IdExtended};
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -11,6 +15,10 @@ pub enum PduAssignment {
     /// Manufacturer/proprietary assigned PDU.  
     /// Contains the PDU value.
     Manufacturer(u32),
+
+    /// Unknown or unrecognized PDU assignment.
+    /// Contains the PDU value.
+    Unknown(u32),
 }
 
 /// Represents the format of a Protocol Data Unit (PDU).
@@ -52,12 +60,17 @@ pub enum DestinationAddress {
     Some(u8),
 }
 
-/// Represents the bit layout of a Parameter Group Number (PGN) within a Controller Area Network
-/// (CAN) message or a J1939 message.
+/// Bitfield representation of 18-bit Parameter Group Number (PGN).
 ///
-/// This struct provides a structured representation of the bits composing a PGN, including
-/// reserved bits, data page bits,
-/// PDU format bits, and PDU specific bits.
+/// ### Repr: `u32`
+///
+/// | Field                  | Size (bits) |
+/// |------------------------|-------------|
+/// | Padding bits (private) | 14          |
+/// | Reserved bits          | 1           |
+/// | Data page bits         | 1           |
+/// | PDU format bits        | 8           |
+/// | PDU specific bits      | 8           |
 #[bitfield(u32, order = Msb)]
 pub struct PgnBits {
     #[bits(14)]
@@ -72,30 +85,89 @@ pub struct PgnBits {
     pdu_specific_bits: u8,
 }
 
-impl IdExtended {
-    /// Returns the PGN bits representation as a u32.
-    #[must_use]
-    pub const fn pgn_bits(&self) -> u32 {
-        let pgn_bitfield = PgnBits::new()
-            .with_reserved_bits(self.reserved_bits())
-            .with_data_page_bits(self.data_page_bits())
-            .with_pdu_format_bits(self.pdu_format_bits())
-            .with_pdu_specific_bits(self.pdu_specific_bits());
+impl Conversion<u32> for PgnBits {
+    type Error = anyhow::Error;
 
-        pgn_bitfield.into_bits()
+    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
+    /// # Errors
+    /// - Never (conversion is trivial)
+    fn try_into_bits(self) -> Result<u32, Self::Error> {
+        Ok(self.into_bits())
     }
 
-    /// Returns the PGN bits representation as a bitfield struct.
-    #[must_use]
-    pub const fn pgn(&self) -> PgnBits {
-        PgnBits::new()
-            .with_reserved_bits(self.reserved_bits())
-            .with_data_page_bits(self.data_page_bits())
-            .with_pdu_format_bits(self.pdu_format_bits())
-            .with_pdu_specific_bits(self.pdu_specific_bits())
+    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn try_into_hex(self) -> Result<String, Self::Error> {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
+                .map_err(anyhow::Error::msg)?;
+        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
     }
 
-    /// Returns the PDU format.
+    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
+    /// # Errors
+    /// - Never (conversion is trivial)
+    fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
+        Ok(Self(bits))
+    }
+
+    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// - If value out of range for valid 29-bit identifiers
+    fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
+        let mut buffer: [u8; 4] = [0; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
+        let bits: u32 = u32::from_be_bytes(buffer);
+
+        Ok(Self(bits))
+    }
+
+    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
+    fn into_bits(self) -> u32 {
+        self.into_bits()
+    }
+
+    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
+    /// # Requires
+    /// - `alloc`
+    #[cfg(feature = "alloc")]
+    fn into_hex(self) -> String {
+        let mut buffer: [u8; 4] = [b'0'; 4];
+        let hex_bytes: &[u8] =
+            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
+                .unwrap_or_default();
+        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+    }
+
+    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
+    fn from_bits(bits: u32) -> Self {
+        Self(bits)
+    }
+
+    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let mut buffer: [u8; 4] = [0; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
+        let bits: u32 = u32::from_be_bytes(buffer);
+
+        Self(bits)
+    }
+}
+
+impl PgnBits {
+    /// Returns the PDU format based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `PduFormat::Pdu1(bits)` if the PDU format value is less than 240.
+    /// - `PduFormat::Pdu2(bits)` otherwise.
     #[must_use]
     pub const fn pdu_format(&self) -> PduFormat {
         match (self.pdu_format_bits() < 240, self.pdu_format_bits()) {
@@ -104,7 +176,11 @@ impl IdExtended {
         }
     }
 
-    /// Returns the group extension.
+    /// Returns the group extension based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `GroupExtension::None` if the PDU format is `Pdu1`.
+    /// - `GroupExtension::Some(bits)` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn group_extension(&self) -> GroupExtension {
         match self.pdu_format() {
@@ -113,7 +189,11 @@ impl IdExtended {
         }
     }
 
-    /// Returns the destination address.
+    /// Returns the destination address based on the parsed PDU format.
+    ///
+    /// # Returns
+    /// - `DestinationAddress::Some(bits)` if the PDU format is `Pdu1`.
+    /// - `DestinationAddress::None` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn destination_address(&self) -> DestinationAddress {
         match self.pdu_format() {
@@ -122,7 +202,11 @@ impl IdExtended {
         }
     }
 
-    /// Returns the communication mode.
+    /// Returns the communication mode based on the parsed PDU format.
+    ///
+    /// # Returns
+    /// - `CommunicationMode::P2P` if the PDU format is `Pdu1`.
+    /// - `CommunicationMode::Broadcast` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn communication_mode(&self) -> CommunicationMode {
         match self.pdu_format() {
@@ -131,7 +215,11 @@ impl IdExtended {
         }
     }
 
-    /// Checks if the communication mode is Point-to-Point (P2P).
+    /// Checks if the communication mode is point-to-point (P2P).
+    ///
+    /// # Returns
+    /// - `true` if the communication mode is `P2P`.
+    /// - `false` if the communication mode is `Broadcast`.
     #[must_use]
     pub const fn is_p2p(&self) -> bool {
         match self.communication_mode() {
@@ -140,7 +228,11 @@ impl IdExtended {
         }
     }
 
-    /// Checks if the communication mode is Broadcast.
+    /// Checks if the communication mode is broadcast.
+    ///
+    /// # Returns
+    /// - `true` if the communication mode is `Broadcast`.
+    /// - `false` if the communication mode is `P2P`.
     #[must_use]
     pub const fn is_broadcast(&self) -> bool {
         match self.communication_mode() {
@@ -149,64 +241,101 @@ impl IdExtended {
         }
     }
 
-    /// Get the PDU assignment (SAE or Manufacturer).
-    /// Returns the assignment with the `u32` PGN value.
-    /// # Note
-    /// There are gaps between PGN bit ranges which aren't assignable.
-    /// # Errors
-    /// - If PGN is not withing a known valid range.
-    pub fn pdu_assignment(&self) -> Result<PduAssignment, anyhow::Error> {
-        match self.pgn_bits() {
+    /// Determines the PDU assignment based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `PduAssignment::Sae(bits)` for known SAE-defined PDU assignments.
+    /// - `PduAssignment::Manufacturer(bits)` for manufacturer-defined PDU assignments.
+    /// - `PduAssignment::Unknown(bits)` for unrecognized PDU assignments.
+    #[must_use]
+    pub fn pdu_assignment(&self) -> PduAssignment {
+        match self.into_bits() {
             0x0000_0000..=0x0000_EE00
             | 0x0000_F000..=0x0000_FEFF
             | 0x0001_0000..=0x0001_EE00
-            | 0x0001_F000..=0x0001_FEFF => Ok(PduAssignment::Sae(self.pgn_bits())),
+            | 0x0001_F000..=0x0001_FEFF => PduAssignment::Sae(self.into_bits()),
 
             0x0000_EF00 | 0x0000_FF00..=0x0000_FFFF | 0x0001_EF00 | 0x0001_FF00..=0x0001_FFFF => {
-                Ok(PduAssignment::Manufacturer(self.pgn_bits()))
+                PduAssignment::Manufacturer(self.into_bits())
             }
-            _ => Err(anyhow::anyhow!("PGN not within a known valid range!")),
+            p => PduAssignment::Unknown(p),
         }
+    }
+}
+
+impl IdExtended {
+    /// Computes the PGN bitfield value based on the extended identifier fields.
+    ///
+    /// # Returns
+    /// The combined PGN bitfield value.
+    #[must_use]
+    pub const fn pgn_bits(&self) -> u32 {
+        let pgn_bitfield = PgnBits::new()
+            .with_reserved_bits(self.reserved())
+            .with_data_page_bits(self.data_page())
+            .with_pdu_format_bits(self.pdu_format())
+            .with_pdu_specific_bits(self.pdu_specific());
+
+        pgn_bitfield.into_bits()
+    }
+
+    /// Constructs and returns a `PgnBits` struct based on the extended identifier fields.
+    ///
+    /// # Returns
+    /// A `PgnBits` bitfield initialized with the extended identifier fields.
+    #[must_use]
+    pub const fn pgn(&self) -> PgnBits {
+        PgnBits::new()
+            .with_reserved_bits(self.reserved())
+            .with_data_page_bits(self.data_page())
+            .with_pdu_format_bits(self.pdu_format())
+            .with_pdu_specific_bits(self.pdu_specific())
     }
 }
 
 #[cfg(test)]
 mod pgn_tests {
     use crate::{
-        CommunicationMode, DestinationAddress, GroupExtension, IdExtended, PduAssignment, PduFormat,
+        conversion::Conversion,
+        identifier::IdExtended,
+        pgn::{CommunicationMode, DestinationAddress, GroupExtension, PduAssignment, PduFormat},
     };
+
+    extern crate std;
 
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let assignment_a = id_a.pdu_assignment()?;
-        let assignment_b = id_b.pdu_assignment()?;
-        let assignment_c = id_c.pdu_assignment()?;
-        let assignment_d = id_d.pdu_assignment()?;
+        let assignment_a = id_a.pgn().pdu_assignment();
+        let assignment_b = id_b.pgn().pdu_assignment();
+        let assignment_c = id_c.pgn().pdu_assignment();
+        let assignment_d = id_d.pgn().pdu_assignment();
 
         assert_eq!(PduAssignment::Sae(65266), assignment_a);
         assert_eq!(PduAssignment::Sae(65170), assignment_b);
         assert_eq!(PduAssignment::Manufacturer(65313), assignment_c);
         assert_eq!(PduAssignment::Sae(41), assignment_d);
 
+        std::println!();
+
         Ok(())
     }
 
     #[test]
     fn test_communication_mode() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let comms_mode_a = id_a.communication_mode();
-        let comms_mode_b = id_b.communication_mode();
-        let comms_mode_c = id_c.communication_mode();
-        let comms_mode_d = id_d.communication_mode();
+        let comms_mode_a = id_a.pgn().communication_mode();
+        let comms_mode_b = id_b.pgn().communication_mode();
+        let comms_mode_c = id_c.pgn().communication_mode();
+        let comms_mode_d = id_d.pgn().communication_mode();
 
         assert_eq!(CommunicationMode::Broadcast, comms_mode_a);
         assert_eq!(CommunicationMode::Broadcast, comms_mode_b);
@@ -218,15 +347,15 @@ mod pgn_tests {
 
     #[test]
     fn test_destination_address() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let dest_addr_a = id_a.destination_address();
-        let dest_addr_b = id_b.destination_address();
-        let dest_addr_c = id_c.destination_address();
-        let dest_addr_d = id_d.destination_address();
+        let dest_addr_a = id_a.pgn().destination_address();
+        let dest_addr_b = id_b.pgn().destination_address();
+        let dest_addr_c = id_c.pgn().destination_address();
+        let dest_addr_d = id_d.pgn().destination_address();
 
         assert_eq!(DestinationAddress::None, dest_addr_a);
         assert_eq!(DestinationAddress::None, dest_addr_b);
@@ -238,15 +367,15 @@ mod pgn_tests {
 
     #[test]
     fn test_group_extension() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let group_ext_a = id_a.group_extension();
-        let group_ext_b = id_b.group_extension();
-        let group_ext_c = id_c.group_extension();
-        let group_ext_d = id_d.group_extension();
+        let group_ext_a = id_a.pgn().group_extension();
+        let group_ext_b = id_b.pgn().group_extension();
+        let group_ext_c = id_c.pgn().group_extension();
+        let group_ext_d = id_d.pgn().group_extension();
 
         assert_eq!(GroupExtension::Some(242), group_ext_a);
         assert_eq!(GroupExtension::Some(146), group_ext_b);
@@ -258,15 +387,15 @@ mod pgn_tests {
 
     #[test]
     fn test_pdu_format() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let pdu_format_a = id_a.pdu_format();
-        let pdu_format_b = id_b.pdu_format();
-        let pdu_format_c = id_c.pdu_format();
-        let pdu_format_d = id_d.pdu_format();
+        let pdu_format_a = id_a.pgn().pdu_format();
+        let pdu_format_b = id_b.pgn().pdu_format();
+        let pdu_format_c = id_c.pgn().pdu_format();
+        let pdu_format_d = id_d.pgn().pdu_format();
 
         assert_eq!(PduFormat::Pdu2(254), pdu_format_a);
         assert_eq!(PduFormat::Pdu2(254), pdu_format_b);
@@ -278,20 +407,20 @@ mod pgn_tests {
 
     #[test]
     fn test_pgn_bits() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::from_hex("18FEF200")?;
-        let id_b = IdExtended::from_hex("1CFE9201")?;
-        let id_c = IdExtended::from_hex("10FF2121")?;
-        let id_d = IdExtended::from_hex("0C00290B")?;
+        let id_a = IdExtended::try_from_hex("18FEF200")?;
+        let id_b = IdExtended::try_from_hex("1CFE9201")?;
+        let id_c = IdExtended::try_from_hex("10FF2121")?;
+        let id_d = IdExtended::try_from_hex("0C00290B")?;
 
-        let pgn_bits_a = id_a.pgn_bits();
-        let pgn_bits_b = id_b.pgn_bits();
-        let pgn_bits_c = id_c.pgn_bits();
-        let pgn_bits_d = id_d.pgn_bits();
+        let pgn_bits_a = id_a.pgn();
+        let pgn_bits_b = id_b.pgn();
+        let pgn_bits_c = id_c.pgn();
+        let pgn_bits_d = id_d.pgn();
 
-        assert_eq!(65266, pgn_bits_a);
-        assert_eq!(65170, pgn_bits_b);
-        assert_eq!(65313, pgn_bits_c);
-        assert_eq!(41, pgn_bits_d);
+        assert_eq!(65266, pgn_bits_a.into_bits());
+        assert_eq!(65170, pgn_bits_b.into_bits());
+        assert_eq!(65313, pgn_bits_c.into_bits());
+        assert_eq!(41, pgn_bits_d.into_bits());
 
         Ok(())
     }
