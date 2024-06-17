@@ -1,8 +1,13 @@
-#[cfg(feature = "alloc")]
-use crate::prelude::String;
+if_alloc! {
+    use crate::prelude::String;
+}
 
 /// A trait for types that can be converted to and from bitfield representations (`bits`)
-/// of integers and hexadecimal string slices (`hex`).
+/// of integers and hexadecimal string slices (hex).
+///
+/// #### `alloc` features:
+/// - `try_into_hex`
+/// - `into_hex`
 pub trait Conversion<T>
 where
     Self: Sized,
@@ -17,6 +22,8 @@ where
     /// Convert `self` into a hexadecimal string
     /// # Errors
     /// - Implementation dependant
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
     fn try_into_hex(self) -> Result<String, Self::Error>;
 
@@ -34,6 +41,8 @@ where
     fn into_bits(self) -> T;
 
     /// Convert `self` into a hexadecimal string
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String;
 

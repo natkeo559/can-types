@@ -12,6 +12,16 @@ impl IdKind for Standard {}
 impl IdKind for Extended {}
 
 /// Bitfield representation of a standard 11-bit CAN identifier.
+///
+/// ### Repr: `u16`
+///
+/// | Field                  | Size (bits) |
+/// |------------------------|-------------|
+/// | Padding bits (private) | 5           |
+/// | Priority bits          | 3           |
+/// | Reserved bits          | 1           |
+/// | Data page bits         | 1           |
+/// | PDU format bits        | 6           |
 #[bitfield(u16, order = Msb)]
 pub struct Standard {
     #[bits(5)]
@@ -27,6 +37,18 @@ pub struct Standard {
 }
 
 /// Bitfield representation of a 29-bit J1939 CAN identifier.
+///
+/// ### Repr: `u32`
+///
+/// | Field                  | Size (bits) |
+/// |------------------------|-------------|
+/// | Padding bits (private) | 3           |
+/// | Priority bits          | 3           |
+/// | Reserved bits          | 1           |
+/// | Data page bits         | 1           |
+/// | PDU format bits        | 8           |
+/// | PDU specific bits      | 8           |
+/// | Source address bits    | 8           |
 #[bitfield(u32, order = Msb)]
 pub struct Extended {
     #[bits(3)]
@@ -77,6 +99,7 @@ impl Conversion<u32> for IdExtended {
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
+
         String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
     }
 
@@ -129,6 +152,7 @@ impl Conversion<u32> for IdExtended {
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.0.into_bits().to_be_bytes(), &mut buffer)
                 .unwrap_or_default();
+
         String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
     }
 
@@ -173,6 +197,7 @@ impl Conversion<u16> for IdStandard {
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
+
         String::from_utf8(hex_bytes.to_vec())
             .map_err(anyhow::Error::msg)
             .map(|mut s| {
@@ -256,11 +281,16 @@ impl Conversion<u16> for IdStandard {
         base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
         let bits: u16 = u16::from_be_bytes(buffer);
         let bitfield: Standard = Standard(bits);
+
         Self(bitfield)
     }
 }
 
 impl IdExtended {
+    /// Decomposes the `IdExtended` into its raw parts.
+    ///
+    /// Returns a tuple containing the priority, reserved flag, data page flag,
+    /// PDU format, PDU specific, and source address bits.
     #[must_use]
     pub const fn into_raw_parts(self) -> (u8, bool, bool, u8, u8, u8) {
         let p = self.0.priority_bits();
@@ -273,6 +303,16 @@ impl IdExtended {
         (p, r, dp, pf, ps, sa)
     }
 
+    /// Constructs an `IdExtended` from its raw parts.
+    ///
+    /// # Arguments
+    /// - `priority`: Priority bits as `u8`.
+    /// - `reserved`: Reserved flag as `bool`.
+    /// - `data_page`: Data page flag as `bool`.
+    /// - `pdu_format`: PDU format bits as `u8`.
+    /// - `pdu_specific`: PDU specific bits as `u8`.
+    /// - `source_addr`: Source address bits as `u8`.
+    ///
     /// # Errors
     /// - If priority value is invalid
     pub fn from_raw_parts(
@@ -301,31 +341,39 @@ impl IdExtended {
         Ok(Self(bitfield))
     }
 
+    /// Returns the priority bits indicating the priority level.
+    ///
+    /// 0 = highest priority
     #[must_use]
     pub const fn priority(&self) -> u8 {
         self.0.priority_bits()
     }
 
+    /// Returns the reserved flag - 0 or 1
     #[must_use]
     pub const fn reserved(&self) -> bool {
         self.0.reserved_bits()
     }
 
+    /// Returns the data page flag - 0 or 1
     #[must_use]
     pub const fn data_page(&self) -> bool {
         self.0.data_page_bits()
     }
 
+    /// Returns the PDU format bits specifying the Protocol Data Unit format.
     #[must_use]
     pub const fn pdu_format(&self) -> u8 {
         self.0.pdu_format_bits()
     }
 
+    /// Returns the PDU specific bits providing additional details about the PDU.
     #[must_use]
     pub const fn pdu_specific(&self) -> u8 {
         self.0.pdu_specific_bits()
     }
 
+    /// Returns the source address bits identifying the source of the data.
     #[must_use]
     pub const fn source_address(&self) -> u8 {
         self.0.source_address_bits()
@@ -333,6 +381,10 @@ impl IdExtended {
 }
 
 impl IdStandard {
+    /// Decomposes the `IdStandard` into its raw parts.
+    ///
+    /// Returns a tuple containing the priority, reserved flag, data page flag,
+    /// and PDU format bits.
     #[must_use]
     pub const fn into_raw_parts(self) -> (u8, bool, bool, u8) {
         let p = self.0.priority_bits();
@@ -343,9 +395,17 @@ impl IdStandard {
         (p, r, dp, pf)
     }
 
+    /// /// Constructs an `IdStandard` from its raw parts.
+    ///
+    /// # Arguments
+    /// - `priority`: Priority bits as `u8`.
+    /// - `reserved`: Reserved flag as `bool`.
+    /// - `data_page`: Data page flag as `bool`.
+    /// - `pdu_format`: PDU format bits as `u8`.
+    ///
     /// # Errors
     /// - If priority value is invalid
-    /// - If PDU Format value is invalid
+    /// - If PDU format is invalid
     pub fn from_raw_parts(
         priority: u8,
         reserved: bool,
@@ -375,21 +435,25 @@ impl IdStandard {
         Ok(Self(bitfield))
     }
 
+    /// Returns the priority bits indicating the priority level.
     #[must_use]
     pub const fn priority(&self) -> u8 {
         self.0.priority_bits()
     }
 
+    /// Returns the reserved flag - 0 or 1
     #[must_use]
     pub const fn reserved(&self) -> bool {
         self.0.reserved_bits()
     }
 
+    /// Returns the data page flag - 0 or 1
     #[must_use]
     pub const fn data_page(&self) -> bool {
         self.0.data_page_bits()
     }
 
+    /// Returns the PDU format bits specifying the Protocol Data Unit format.
     #[must_use]
     pub const fn pdu_format(&self) -> u8 {
         self.0.pdu_format_bits()

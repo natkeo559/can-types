@@ -6,8 +6,20 @@ use bitfield_struct::bitfield;
 
 use crate::conversion::Conversion;
 
-/// Bitfield representing an 8-byte data field
-/// messages.
+/// Bitfield representing an 8-byte data field.
+///
+/// ### Repr `u64`
+///
+/// | Field            | Size (bits) |
+/// |------------------|-------------|
+/// | byte 0           | 8           |
+/// | byte 1           | 8           |
+/// | byte 2           | 8           |
+/// | byte 3           | 8           |
+/// | byte 4           | 8           |
+/// | byte 5           | 8           |
+/// | byte 6           | 8           |
+/// | byte 7           | 8           |
 #[bitfield(u64, order = Msb)]
 #[derive(PartialEq, Eq)]
 pub struct Data {

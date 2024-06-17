@@ -15,6 +15,9 @@ pub enum PduAssignment {
     /// Manufacturer/proprietary assigned PDU.  
     /// Contains the PDU value.
     Manufacturer(u32),
+
+    /// Unknown or unrecognized PDU assignment.
+    /// Contains the PDU value.
     Unknown(u32),
 }
 
@@ -57,6 +60,17 @@ pub enum DestinationAddress {
     Some(u8),
 }
 
+/// Bitfield representation of 18-bit Parameter Group Number (PGN).
+///
+/// ### Repr: `u32`
+///
+/// | Field                  | Size (bits) |
+/// |------------------------|-------------|
+/// | Padding bits (private) | 14          |
+/// | Reserved bits          | 1           |
+/// | Data page bits         | 1           |
+/// | PDU format bits        | 8           |
+/// | PDU specific bits      | 8           |
 #[bitfield(u32, order = Msb)]
 pub struct PgnBits {
     #[bits(14)]
@@ -74,58 +88,86 @@ pub struct PgnBits {
 impl Conversion<u32> for PgnBits {
     type Error = anyhow::Error;
 
+    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
+    /// # Errors
+    /// - Never (conversion is trivial)
     fn try_into_bits(self) -> Result<u32, Self::Error> {
         Ok(self.into_bits())
     }
 
+    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
-    fn try_into_hex<'a>(self) -> Result<String, Self::Error> {
-        let mut buffer = [b'0'; 4];
+    fn try_into_hex(self) -> Result<String, Self::Error> {
+        let mut buffer: [u8; 4] = [b'0'; 4];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
         String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
     }
 
+    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
+    /// # Errors
+    /// - Never (conversion is trivial)
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         Ok(Self(bits))
     }
 
+    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// - If value out of range for valid 29-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buf: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buf).map_err(anyhow::Error::msg)?;
-        let bits: u32 = u32::from_be_bytes(buf);
+        let mut buffer: [u8; 4] = [0; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
+        let bits: u32 = u32::from_be_bytes(buffer);
 
         Ok(Self(bits))
     }
 
+    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
     fn into_bits(self) -> u32 {
         self.into_bits()
     }
 
+    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer = [b'0'; 4];
+        let mut buffer: [u8; 4] = [b'0'; 4];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .unwrap_or_default();
         String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
     }
 
+    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
     fn from_bits(bits: u32) -> Self {
         Self(bits)
     }
 
+    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buf: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buf).unwrap_or_default();
-        let bits: u32 = u32::from_be_bytes(buf);
+        let mut buffer: [u8; 4] = [0; 4];
+        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
+        let bits: u32 = u32::from_be_bytes(buffer);
 
         Self(bits)
     }
 }
 
 impl PgnBits {
+    /// Returns the PDU format based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `PduFormat::Pdu1(bits)` if the PDU format value is less than 240.
+    /// - `PduFormat::Pdu2(bits)` otherwise.
     #[must_use]
     pub const fn pdu_format(&self) -> PduFormat {
         match (self.pdu_format_bits() < 240, self.pdu_format_bits()) {
@@ -134,6 +176,11 @@ impl PgnBits {
         }
     }
 
+    /// Returns the group extension based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `GroupExtension::None` if the PDU format is `Pdu1`.
+    /// - `GroupExtension::Some(bits)` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn group_extension(&self) -> GroupExtension {
         match self.pdu_format() {
@@ -142,6 +189,11 @@ impl PgnBits {
         }
     }
 
+    /// Returns the destination address based on the parsed PDU format.
+    ///
+    /// # Returns
+    /// - `DestinationAddress::Some(bits)` if the PDU format is `Pdu1`.
+    /// - `DestinationAddress::None` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn destination_address(&self) -> DestinationAddress {
         match self.pdu_format() {
@@ -150,6 +202,11 @@ impl PgnBits {
         }
     }
 
+    /// Returns the communication mode based on the parsed PDU format.
+    ///
+    /// # Returns
+    /// - `CommunicationMode::P2P` if the PDU format is `Pdu1`.
+    /// - `CommunicationMode::Broadcast` if the PDU format is `Pdu2`.
     #[must_use]
     pub const fn communication_mode(&self) -> CommunicationMode {
         match self.pdu_format() {
@@ -158,6 +215,11 @@ impl PgnBits {
         }
     }
 
+    /// Checks if the communication mode is point-to-point (P2P).
+    ///
+    /// # Returns
+    /// - `true` if the communication mode is `P2P`.
+    /// - `false` if the communication mode is `Broadcast`.
     #[must_use]
     pub const fn is_p2p(&self) -> bool {
         match self.communication_mode() {
@@ -166,6 +228,11 @@ impl PgnBits {
         }
     }
 
+    /// Checks if the communication mode is broadcast.
+    ///
+    /// # Returns
+    /// - `true` if the communication mode is `Broadcast`.
+    /// - `false` if the communication mode is `P2P`.
     #[must_use]
     pub const fn is_broadcast(&self) -> bool {
         match self.communication_mode() {
@@ -174,6 +241,12 @@ impl PgnBits {
         }
     }
 
+    /// Determines the PDU assignment based on the parsed bits.
+    ///
+    /// # Returns
+    /// - `PduAssignment::Sae(bits)` for known SAE-defined PDU assignments.
+    /// - `PduAssignment::Manufacturer(bits)` for manufacturer-defined PDU assignments.
+    /// - `PduAssignment::Unknown(bits)` for unrecognized PDU assignments.
     #[must_use]
     pub fn pdu_assignment(&self) -> PduAssignment {
         match self.into_bits() {
@@ -191,6 +264,10 @@ impl PgnBits {
 }
 
 impl IdExtended {
+    /// Computes the PGN bitfield value based on the extended identifier fields.
+    ///
+    /// # Returns
+    /// The combined PGN bitfield value.
     #[must_use]
     pub const fn pgn_bits(&self) -> u32 {
         let pgn_bitfield = PgnBits::new()
@@ -202,6 +279,10 @@ impl IdExtended {
         pgn_bitfield.into_bits()
     }
 
+    /// Constructs and returns a `PgnBits` struct based on the extended identifier fields.
+    ///
+    /// # Returns
+    /// A `PgnBits` bitfield initialized with the extended identifier fields.
     #[must_use]
     pub const fn pgn(&self) -> PgnBits {
         PgnBits::new()

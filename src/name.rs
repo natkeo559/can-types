@@ -9,6 +9,20 @@ use crate::conversion::Conversion;
 ///
 /// The Name structure is used in the SAE J1939 protocol to represent the identity of a device or
 /// component within a vehicle's network.
+///
+/// ### Repr: `u64`
+/// | Field                             | Size (bits) |
+/// |-----------------------------------|-------------|
+/// | Arbitrary address bits            | 1           |
+/// | Industry group bits               | 3           |
+/// | Vehicle system instance bits      | 4           |
+/// | Vehicle system bits               | 7           |
+/// | Reserved bits                     | 1           |
+/// | Function bits                     | 8           |
+/// | Function instance bits            | 5           |
+/// | ECU instance bits                 | 3           |
+/// | Manufacturer code bits            | 11          |
+/// | Identity number bits              | 21          |
 #[bitfield(u64, order = Msb)]
 pub struct Name {
     #[bits(1)]
@@ -36,50 +50,72 @@ pub struct Name {
 impl Conversion<u64> for Name {
     type Error = anyhow::Error;
 
+    /// Creates a new 64-bit integer from the `Name` bitfield.
+    /// # Errors
+    /// - Never (conversion is trivial)
     fn try_into_bits(self) -> Result<u64, Self::Error> {
         Ok(self.into_bits())
     }
 
+    /// Creates a new base-16 (hex) `String` from the `Name` bitfield.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
     fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer = [b'0'; 8];
+        let mut buffer: [u8; 8] = [b'0'; 8];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
         String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
     }
 
+    /// Creates a new `Name` bitfield from a 64-bit integer.
+    /// # Errors
+    /// - Never (conversion is trivial)
     fn try_from_bits(bits: u64) -> Result<Self, Self::Error> {
         Ok(Self(bits))
     }
 
+    /// Creates a new `Name` bitfield from a base-16 (hex) string slice.
+    /// # Errors
+    /// - If invalid encoding of provided Base16 string
+    /// - If insufficient output buffer length
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 8] = [0; 8];
+        let mut buffer: [u8; 8] = [b'0'; 8];
         base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
         let bits: u64 = u64::from_be_bytes(buffer);
 
         Ok(Self(bits))
     }
 
+    /// Creates a new 64-bit integer from the `Name` bitfield.
     fn into_bits(self) -> u64 {
         self.into_bits()
     }
 
+    /// Creates a new base-16 (hex) `String` from the `Name` bitfield.
+    /// # Requires
+    /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer = [b'0'; 8];
+        let mut buffer: [u8; 8] = [b'0'; 8];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .unwrap_or_default();
         String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
     }
 
+    /// Creates a new `Name` bitfield from a 64-bit integer.
     fn from_bits(bits: u64) -> Self {
         Self(bits)
     }
 
+    /// Creates a new `Name` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 8] = [0; 8];
+        let mut buffer: [u8; 8] = [b'0'; 8];
         base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
         let bits: u64 = u64::from_be_bytes(buffer);
 
