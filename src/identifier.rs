@@ -244,7 +244,7 @@ impl Conversion<u16> for IdStandard {
     /// - If insufficient output buffer length
     /// - If value out of range for valid 11-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut output_buf: [u8; 2] = [0u8; 2];
+        let mut output_buf: [u8; 2] = [0; 2];
         let mut input_buf: [u8; 4] = [b'0'; 4];
 
         // padding the hex bytes since decode expects even size buf
@@ -294,7 +294,7 @@ impl Conversion<u16> for IdStandard {
 
     /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut output_buf: [u8; 2] = [0u8; 2];
+        let mut output_buf: [u8; 2] = [0; 2];
         let mut input_buf: [u8; 4] = [b'0'; 4];
 
         // padding the hex bytes since decode expects even size buf
