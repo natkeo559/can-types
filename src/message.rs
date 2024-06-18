@@ -13,15 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::prelude::{Conversion, Data, Extended, Id, IdExtended, IdKind};
+use crate::prelude::{Conversion, Data, Extended, Id, IdExtended, IdKind, Pdu, PduData, PduKind};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Message<I: IdKind> {
+pub struct Message<I: IdKind, P: PduKind> {
     id: Id<I>,
-    data: Data,
+    data: Pdu<P>,
 }
 
-impl Message<Extended> {
+impl Message<Extended, Data> {
     /// Constructs a new `Message` from its parts: an extended identifier and data.
     ///
     /// # Arguments
@@ -31,7 +31,7 @@ impl Message<Extended> {
     /// # Returns
     /// A new `Message` instance initialized with the provided parts.
     #[must_use]
-    pub fn from_parts(id: IdExtended, data: Data) -> Self {
+    pub fn from_parts(id: IdExtended, data: PduData) -> Self {
         Self { id, data }
     }
 
@@ -42,7 +42,7 @@ impl Message<Extended> {
     /// - An `Id<Extended>` representing the extended identifier.
     /// - A `Data` containing the payload or content of the message.
     #[must_use]
-    pub fn into_parts(self) -> (Id<Extended>, Data) {
+    pub fn into_parts(self) -> (Id<Extended>, PduData) {
         (self.id, self.data)
     }
 
@@ -51,7 +51,7 @@ impl Message<Extended> {
     /// - If failed to construct the data field from bits
     pub fn try_from_bits(hex_id: u32, hex_data: u64) -> Result<Self, anyhow::Error> {
         let id: Id<Extended> = IdExtended::try_from_bits(hex_id)?;
-        let data: Data = Data::try_from_bits(hex_data)?;
+        let data: Pdu<Data> = PduData::try_from_bits(hex_data)?;
 
         Ok(Self { id, data })
     }
@@ -61,7 +61,7 @@ impl Message<Extended> {
     /// - If failed to construct the data field from hex
     pub fn try_from_hex(hex_id: &str, hex_data: &str) -> Result<Self, anyhow::Error> {
         let id: Id<Extended> = IdExtended::try_from_hex(hex_id)?;
-        let data: Data = Data::try_from_hex(hex_data)?;
+        let data: Pdu<Data> = PduData::try_from_hex(hex_data)?;
 
         Ok(Self { id, data })
     }
@@ -77,7 +77,7 @@ impl Message<Extended> {
     #[must_use]
     pub fn from_bits(hex_id: u32, hex_data: u64) -> Self {
         let id: Id<Extended> = IdExtended::from_bits(hex_id);
-        let data: Data = Data::from_bits(hex_data);
+        let data: Pdu<Data> = PduData::from_bits(hex_data);
 
         Self { id, data }
     }
@@ -93,7 +93,7 @@ impl Message<Extended> {
     #[must_use]
     pub fn from_hex(hex_id: &str, hex_data: &str) -> Self {
         let id: Id<Extended> = IdExtended::from_hex(hex_id);
-        let data: Data = Data::from_hex(hex_data);
+        let data: Pdu<Data> = PduData::from_hex(hex_data);
 
         Self { id, data }
     }
@@ -101,7 +101,7 @@ impl Message<Extended> {
     /// Retrieves the extended identifier from the message.
     ///
     /// # Returns
-    /// The `IdExtended` associated with the message.
+    /// The `IdExtended` bitfield associated with the message.
     #[must_use]
     pub fn id(&self) -> IdExtended {
         self.id
@@ -110,9 +110,9 @@ impl Message<Extended> {
     /// Retrieves the data payload from the message.
     ///
     /// # Returns
-    /// The `Data` payload associated with the message.
+    /// The `Data` bitfield associated with the message.
     #[must_use]
-    pub fn data(&self) -> Data {
+    pub fn data(&self) -> PduData {
         self.data
     }
 }

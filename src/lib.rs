@@ -67,7 +67,7 @@ pub mod conversion;
 pub mod data;
 pub mod identifier;
 pub mod message;
-pub mod name;
+pub mod payload;
 pub mod pgn;
 
 pub mod prelude {
@@ -75,7 +75,7 @@ pub mod prelude {
     pub use crate::data::*;
     pub use crate::identifier::*;
     pub use crate::message::*;
-    pub use crate::name::*;
+    pub use crate::payload::*;
     pub use crate::pgn::*;
     if_alloc! {
         pub use alloc::string::String;

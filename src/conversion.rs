@@ -17,9 +17,8 @@ if_alloc! {
     use crate::alloc::string::String;
 }
 
-use crate::data::Data;
 use crate::identifier::{IdExtended, IdStandard};
-use crate::name::Name;
+use crate::payload::{PduData, PduName};
 
 /// A trait for types that can be converted to and from bitfield representations (`bits`)
 /// of integers and hexadecimal string slices (hex).
@@ -72,14 +71,14 @@ where
     fn from_hex(hex_str: &str) -> Self;
 }
 
-impl From<Data> for Name {
-    fn from(value: Data) -> Self {
+impl From<PduData> for PduName {
+    fn from(value: PduData) -> Self {
         Self::from_bits(value.into_bits())
     }
 }
 
-impl From<Name> for Data {
-    fn from(value: Name) -> Self {
+impl From<PduName> for PduData {
+    fn from(value: PduName) -> Self {
         Self::from_bits(value.into_bits())
     }
 }
@@ -92,22 +91,24 @@ impl From<IdStandard> for IdExtended {
 
 #[cfg(test)]
 mod impl_tests {
+    use crate::prelude::{PduData, PduName};
+
     use super::*;
 
     #[test]
     fn test_data_from() {
-        let name_a: Name = Name::from_hex("FFFF82DF1AFFFFFF");
-        let data_a: Data = Data::from(name_a);
+        let name_a = PduName::from_hex("FFFF82DF1AFFFFFF");
+        let data_a = PduData::from(name_a);
 
-        assert_eq!(Data::from_hex("FFFF82DF1AFFFFFF"), data_a);
+        assert_eq!(PduData::from_hex("FFFF82DF1AFFFFFF"), data_a);
     }
 
     #[test]
     fn test_name_from() {
-        let data_a: Data = Data::from_hex("FFFF82DF1AFFFFFF");
-        let name_a: Name = Name::from(data_a);
+        let data_a: PduData = PduData::from_hex("FFFF82DF1AFFFFFF");
+        let name_a: PduName = PduName::from(data_a);
 
-        assert_eq!(Name::from_hex("FFFF82DF1AFFFFFF"), name_a);
+        assert_eq!(PduName::from_hex("FFFF82DF1AFFFFFF"), name_a);
     }
 
     #[test]
