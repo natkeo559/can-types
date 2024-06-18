@@ -36,7 +36,7 @@ use crate::conversion::Conversion;
 /// | byte 6           | 8           |
 /// | byte 7           | 8           |
 #[bitfield(u64, order = Msb)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Data {
     #[bits(8)]
     byte_0_bits: u8,

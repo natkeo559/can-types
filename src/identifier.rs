@@ -38,6 +38,7 @@ impl IdKind for Extended {}
 /// | Data page bits         | 1           |
 /// | PDU format bits        | 6           |
 #[bitfield(u16, order = Msb)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Standard {
     #[bits(5)]
     _padding_bits: u8,
@@ -65,6 +66,7 @@ pub struct Standard {
 /// | PDU specific bits      | 8           |
 /// | Source address bits    | 8           |
 #[bitfield(u32, order = Msb)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Extended {
     #[bits(3)]
     _padding_bits: u8,
@@ -110,7 +112,7 @@ impl Conversion<u32> for IdExtended {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 8] = [b'0'; 8];
+        let mut buffer: [u8; 8] = [0; 8];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
@@ -139,7 +141,7 @@ impl Conversion<u32> for IdExtended {
     /// - If insufficient output buffer length
     /// - If value out of range for valid 29-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 4] = [b'0'; 4];
+        let mut buffer: [u8; 4] = [0; 4];
         base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
         let bits: u32 = u32::from_be_bytes(buffer);
         if bits > 0x1FFF_FFFF {
@@ -163,7 +165,7 @@ impl Conversion<u32> for IdExtended {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 8] = [b'0'; 8];
+        let mut buffer: [u8; 8] = [0; 8];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.0.into_bits().to_be_bytes(), &mut buffer)
                 .unwrap_or_default();
@@ -180,7 +182,7 @@ impl Conversion<u32> for IdExtended {
 
     /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 4] = [b'0'; 4];
+        let mut buffer: [u8; 4] = [0; 4];
         base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
         let bits: u32 = u32::from_be_bytes(buffer);
         let bitfield: Extended = Extended::from_bits(bits);
@@ -208,7 +210,7 @@ impl Conversion<u16> for IdStandard {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 4] = [b'0'; 4];
+        let mut buffer: [u8; 4] = [0; 4];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .map_err(anyhow::Error::msg)?;
@@ -242,7 +244,7 @@ impl Conversion<u16> for IdStandard {
     /// - If insufficient output buffer length
     /// - If value out of range for valid 11-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut output_buf: [u8; 2] = [b'0'; 2];
+        let mut output_buf: [u8; 2] = [0u8; 2];
         let mut input_buf: [u8; 4] = [b'0'; 4];
 
         // padding the hex bytes since decode expects even size buf
@@ -273,7 +275,7 @@ impl Conversion<u16> for IdStandard {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 4] = [b'0'; 4];
+        let mut buffer: [u8; 4] = [0; 4];
         let hex_bytes: &[u8] =
             base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
                 .unwrap_or_default();
@@ -292,9 +294,17 @@ impl Conversion<u16> for IdStandard {
 
     /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 2] = [b'0'; 2];
-        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
-        let bits: u16 = u16::from_be_bytes(buffer);
+        let mut output_buf: [u8; 2] = [0u8; 2];
+        let mut input_buf: [u8; 4] = [b'0'; 4];
+
+        // padding the hex bytes since decode expects even size buf
+        for (c, buf) in hex_str.chars().rev().zip(input_buf.iter_mut().rev()) {
+            *buf = c as u8;
+        }
+
+        base16ct::upper::decode(input_buf, &mut output_buf).unwrap_or_default();
+        let bits: u16 = u16::from_be_bytes(output_buf);
+
         let bitfield: Standard = Standard(bits);
 
         Self(bitfield)

@@ -39,6 +39,7 @@ use crate::conversion::Conversion;
 /// | Manufacturer code bits            | 11          |
 /// | Identity number bits              | 21          |
 #[bitfield(u64, order = Msb)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Name {
     #[bits(1)]
     arbitrary_address_bits: bool,

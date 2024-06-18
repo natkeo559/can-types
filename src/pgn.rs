@@ -87,6 +87,7 @@ pub enum DestinationAddress {
 /// | PDU format bits        | 8           |
 /// | PDU specific bits      | 8           |
 #[bitfield(u32, order = Msb)]
+#[derive(PartialEq, Eq)]
 pub struct PgnBits {
     #[bits(14)]
     _padding_bits: u16,

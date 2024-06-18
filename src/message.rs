@@ -15,6 +15,7 @@
 
 use crate::prelude::{Conversion, Data, Extended, Id, IdExtended, IdKind};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Message<I: IdKind> {
     id: Id<I>,
     data: Data,
