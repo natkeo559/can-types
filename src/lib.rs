@@ -68,6 +68,7 @@ if_alloc! {
     extern crate alloc;
 }
 
+pub mod address;
 pub mod conversion;
 pub mod identifier;
 pub mod message;
@@ -75,12 +76,10 @@ pub mod payload;
 pub mod pgn;
 
 pub mod prelude {
+    pub use crate::address::*;
     pub use crate::conversion::*;
     pub use crate::identifier::*;
     pub use crate::message::*;
     pub use crate::payload::*;
     pub use crate::pgn::*;
-    if_alloc! {
-        pub use alloc::{string::String, fmt::format};
-    }
 }
