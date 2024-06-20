@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 if_alloc! {
-    use crate::prelude::String;
+    use crate::alloc::{string::String, fmt::format};
 }
 
 use bitfield_struct::bitfield;
@@ -117,29 +117,6 @@ pub type PduName = Pdu<Name>;
 impl Conversion<u64> for PduData {
     type Error = anyhow::Error;
 
-    /// Creates a new 64-bit integer from the `Data` bitfield.
-    /// # Errors
-    /// - Never (conversion is trivial)
-    fn try_into_bits(self) -> Result<u64, Self::Error> {
-        Ok(self.into_bits())
-    }
-
-    /// Creates a new base-16 (hex) `String` from the `Data` bitfield.
-    /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 8] = [0; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .map_err(anyhow::Error::msg)?;
-
-        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
-    }
-
     /// Creates a new `Data` bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
@@ -149,12 +126,9 @@ impl Conversion<u64> for PduData {
 
     /// Creates a new `Data` bitfield from a base-16 (hex) string slice.
     /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
+    /// - If failed to parse input hexadecimal string slice.
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 8] = [0; 8];
-        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
-        let bits: u64 = u64::from_be_bytes(buffer);
+        let bits = u64::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
 
         Ok(Self(Data(bits)))
     }
@@ -169,12 +143,7 @@ impl Conversion<u64> for PduData {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 8] = [0; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .unwrap_or_default();
-
-        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+        format(format_args!("{:016X}", self.0.into_bits()))
     }
 
     /// Creates a new `Data` bitfield from a 64-bit integer.
@@ -184,9 +153,7 @@ impl Conversion<u64> for PduData {
 
     /// Creates a new `Data` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 8] = [0; 8];
-        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
-        let bits: u64 = u64::from_be_bytes(buffer);
+        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
 
         Self(Data(bits))
     }
@@ -275,29 +242,6 @@ impl Pdu<Data> {
 impl Conversion<u64> for PduName {
     type Error = anyhow::Error;
 
-    /// Creates a new 64-bit integer from the `Name` bitfield.
-    /// # Errors
-    /// - Never (conversion is trivial)
-    fn try_into_bits(self) -> Result<u64, Self::Error> {
-        Ok(self.into_bits())
-    }
-
-    /// Creates a new base-16 (hex) `String` from the `Name` bitfield.
-    /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 8] = [b'0'; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .map_err(anyhow::Error::msg)?;
-
-        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
-    }
-
     /// Creates a new `Name` bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
@@ -310,9 +254,7 @@ impl Conversion<u64> for PduName {
     /// - If invalid encoding of provided Base16 string
     /// - If insufficient output buffer length
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 8] = [b'0'; 8];
-        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
-        let bits: u64 = u64::from_be_bytes(buffer);
+        let bits = u64::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
 
         Ok(Self(Name(bits)))
     }
@@ -327,11 +269,7 @@ impl Conversion<u64> for PduName {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 8] = [b'0'; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .unwrap_or_default();
-        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+        format(format_args!("{:016X}", self.0.into_bits()))
     }
 
     /// Creates a new `Name` bitfield from a 64-bit integer.
@@ -341,9 +279,7 @@ impl Conversion<u64> for PduName {
 
     /// Creates a new `Name` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 8] = [b'0'; 8];
-        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
-        let bits: u64 = u64::from_be_bytes(buffer);
+        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
 
         Self(Name(bits))
     }

@@ -25,7 +25,7 @@
 //!     # fn main() -> Result<(), anyhow::Error> {
 //!         let id_a = IdExtended::try_from_hex("0CF00400")?;
 //!
-//!         # assert_eq!(0b00001100111100000000010000000000, id_a.try_into_bits()?);
+//!         # assert_eq!(0b00001100111100000000010000000000, id_a.into_bits());
 //!         assert_eq!(3, id_a.priority());
 //!         assert_eq!(0, id_a.source_address());
 //!         # Ok(())
@@ -81,6 +81,6 @@ pub mod prelude {
     pub use crate::payload::*;
     pub use crate::pgn::*;
     if_alloc! {
-        pub use alloc::string::String;
+        pub use alloc::{string::String, fmt::format};
     }
 }

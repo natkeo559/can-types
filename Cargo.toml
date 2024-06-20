@@ -16,7 +16,6 @@ exclude = ["/tests", "/.github"]
 
 [dependencies]
 anyhow = {version = "1.0.83", default-features = false}
-base16ct = { version = "0.2.0", default-features = false }
 bitfield-struct = {version = "0.6.1", default-features = false}
 
 [features]

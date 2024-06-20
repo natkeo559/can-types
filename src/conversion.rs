@@ -24,26 +24,12 @@ use crate::payload::{PduData, PduName};
 /// of integers and hexadecimal string slices (hex).
 ///
 /// #### `alloc` features:
-/// - `try_into_hex`
 /// - `into_hex`
 pub trait Conversion<T>
 where
     Self: Sized,
 {
     type Error;
-
-    /// Convert `self` into an integer of type `T`
-    /// # Errors
-    /// - Implementation dependent
-    fn try_into_bits(self) -> Result<T, Self::Error>;
-
-    /// Convert `self` into a hexadecimal string
-    /// # Errors
-    /// - Implementation dependent
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error>;
 
     /// Convert an integer of type `T` into `Self`
     /// # Errors

@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 if_alloc! {
-    use crate::prelude::String;
+    use crate::alloc::{string::String, fmt::format};
 }
 
 use bitfield_struct::bitfield;
@@ -104,45 +104,29 @@ pub struct PgnBits {
 impl Conversion<u32> for PgnBits {
     type Error = anyhow::Error;
 
-    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
-    /// # Errors
-    /// - Never (conversion is trivial)
-    fn try_into_bits(self) -> Result<u32, Self::Error> {
-        Ok(self.into_bits())
-    }
-
-    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
-    /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 4] = [b'0'; 4];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .map_err(anyhow::Error::msg)?;
-        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
-    }
-
     /// Creates a new `PgnBits` bitfield from a 32-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
+        if bits > 0x3FFFF {
+            return Err(anyhow::anyhow!(
+                "PGN bits out of range! Valid range is 0x00000..0x3FFFF - got {bits:#05X}"
+            ));
+        }
         Ok(Self(bits))
     }
 
     /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
     /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// - If value out of range for valid 29-bit identifiers
+    /// - If failed to parse input hexadecimal string slice.
+    /// - If value out of range for valid 18-bit PGNs.
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
-        let bits: u32 = u32::from_be_bytes(buffer);
-
+        let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
+        if bits > 0x3FFFF {
+            return Err(anyhow::anyhow!(
+                "PGN bits out of range! Valid range is 0x00000..0x3FFFF - got {bits:#05X}"
+            ));
+        }
         Ok(Self(bits))
     }
 
@@ -156,11 +140,7 @@ impl Conversion<u32> for PgnBits {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 4] = [b'0'; 4];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .unwrap_or_default();
-        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+        format(format_args!("{:05X}", self.into_bits()))
     }
 
     /// Creates a new `PgnBits` bitfield from a 32-bit integer.
@@ -170,9 +150,7 @@ impl Conversion<u32> for PgnBits {
 
     /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
-        let bits: u32 = u32::from_be_bytes(buffer);
+        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
 
         Self(bits)
     }

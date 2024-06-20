@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 if_alloc! {
-    use crate::prelude::String;
+    use crate::alloc::{string::String, fmt::format};
 }
 
 use bitfield_struct::bitfield;
@@ -97,29 +97,6 @@ pub type IdStandard = Id<Standard>;
 impl Conversion<u32> for IdExtended {
     type Error = anyhow::Error;
 
-    /// Creates a new 32-bit integer from the `IdExtended` bitfield.
-    /// # Errors
-    /// - Never (conversion is trivial)
-    fn try_into_bits(self) -> Result<u32, Self::Error> {
-        Ok(self.0.into_bits())
-    }
-
-    /// Creates a new base-16 (hex) `String` from the `IdExtended` bitfield.
-    /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 8] = [0; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .map_err(anyhow::Error::msg)?;
-
-        String::from_utf8(hex_bytes.to_vec()).map_err(anyhow::Error::msg)
-    }
-
     /// Creates a new `IdExtended` bitfield from a 32-bit integer.
     /// # Errors
     /// - If value out of range for valid 29-bit identifiers
@@ -137,13 +114,10 @@ impl Conversion<u32> for IdExtended {
 
     /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
     /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
+    /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 29-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut buffer: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buffer).map_err(anyhow::Error::msg)?;
-        let bits: u32 = u32::from_be_bytes(buffer);
+        let bits: u32 = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
             return Err(anyhow::anyhow!(
                 "Identifier bits out of range! Valid range is 0x00000000..0x1FFFFFFF - got {:#08X}",
@@ -165,12 +139,7 @@ impl Conversion<u32> for IdExtended {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 8] = [0; 8];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.0.into_bits().to_be_bytes(), &mut buffer)
-                .unwrap_or_default();
-
-        String::from_utf8(hex_bytes.to_vec()).unwrap_or_default()
+        format(format_args!("{:08X}", self.0.into_bits()))
     }
 
     /// Creates a new `IdExtended` bitfield from a 32-bit integer.
@@ -182,10 +151,8 @@ impl Conversion<u32> for IdExtended {
 
     /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut buffer: [u8; 4] = [0; 4];
-        base16ct::upper::decode(hex_str, &mut buffer).unwrap_or_default();
-        let bits: u32 = u32::from_be_bytes(buffer);
-        let bitfield: Extended = Extended::from_bits(bits);
+        let bits: u32 = u32::from_str_radix(hex_str, 16).unwrap_or_default();
+        let bitfield: Extended = Extended(bits);
 
         Self(bitfield)
     }
@@ -193,35 +160,6 @@ impl Conversion<u32> for IdExtended {
 
 impl Conversion<u16> for IdStandard {
     type Error = anyhow::Error;
-
-    /// Creates a new 16-bit integer from the `IdStandard` bitfield.
-    /// # Errors
-    /// - Never (conversion is trivial)
-    #[allow(clippy::useless_conversion)]
-    fn try_into_bits(self) -> Result<u16, Self::Error> {
-        self.0.into_bits().try_into().map_err(anyhow::Error::msg)
-    }
-
-    /// Creates a new base-16 (hex) `String` from the `IdStandard` bitfield.
-    /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
-    /// # Requires
-    /// - `alloc`
-    #[cfg(feature = "alloc")]
-    fn try_into_hex(self) -> Result<String, Self::Error> {
-        let mut buffer: [u8; 4] = [0; 4];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .map_err(anyhow::Error::msg)?;
-
-        String::from_utf8(hex_bytes.to_vec())
-            .map_err(anyhow::Error::msg)
-            .map(|mut s| {
-                s.drain(..1);
-                s
-            })
-    }
 
     /// Creates a new `IdStandard` bitfield from a 16-bit integer.
     /// # Errors
@@ -240,20 +178,10 @@ impl Conversion<u16> for IdStandard {
 
     /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
     /// # Errors
-    /// - If invalid encoding of provided Base16 string
-    /// - If insufficient output buffer length
+    /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 11-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let mut output_buf: [u8; 2] = [0; 2];
-        let mut input_buf: [u8; 4] = [b'0'; 4];
-
-        // padding the hex bytes since decode expects even size buf
-        for (c, buf) in hex_str.chars().rev().zip(input_buf.iter_mut().rev()) {
-            *buf = c as u8;
-        }
-
-        base16ct::upper::decode(input_buf, &mut output_buf).map_err(anyhow::Error::msg)?;
-        let bits: u16 = u16::from_be_bytes(output_buf);
+        let bits: u16 = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
             return Err(anyhow::anyhow!(
                 "Identifier bits out of range! Valid range is 0x000..0x7FF - got {:#03X}",
@@ -275,14 +203,7 @@ impl Conversion<u16> for IdStandard {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        let mut buffer: [u8; 4] = [0; 4];
-        let hex_bytes: &[u8] =
-            base16ct::upper::encode(&self.into_bits().to_be_bytes(), &mut buffer)
-                .unwrap_or_default();
-        let mut output = String::from_utf8(hex_bytes.to_vec()).unwrap_or_default();
-        output.drain(..1);
-
-        output
+        format(format_args!("{:03X}", self.0.into_bits()))
     }
 
     /// Creates a new `IdStandard` bitfield from a 16-bit integer.
@@ -294,17 +215,7 @@ impl Conversion<u16> for IdStandard {
 
     /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let mut output_buf: [u8; 2] = [0; 2];
-        let mut input_buf: [u8; 4] = [b'0'; 4];
-
-        // padding the hex bytes since decode expects even size buf
-        for (c, buf) in hex_str.chars().rev().zip(input_buf.iter_mut().rev()) {
-            *buf = c as u8;
-        }
-
-        base16ct::upper::decode(input_buf, &mut output_buf).unwrap_or_default();
-        let bits: u16 = u16::from_be_bytes(output_buf);
-
+        let bits: u16 = u16::from_str_radix(hex_str, 16).unwrap_or_default();
         let bitfield: Standard = Standard(bits);
 
         Self(bitfield)
@@ -557,7 +468,7 @@ mod id_tests {
 
         let id_a = IdStandard::try_from_hex(hex_str)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.try_into_bits()?);
+        assert_eq!(0b00000_000_0_0_001111, id_a.into_bits());
         assert_eq!(0, id_a.priority());
         assert_eq!(false, id_a.reserved());
         assert_eq!(false, id_a.data_page());
@@ -573,7 +484,7 @@ mod id_tests {
         let id_hex = "00F";
         let id_a = IdStandard::try_from_bits(id_dec)?;
 
-        assert_eq!(id_hex, id_a.try_into_hex()?);
+        assert_eq!(id_hex, id_a.into_hex());
 
         Ok(())
     }
@@ -584,10 +495,7 @@ mod id_tests {
 
         let id_a = IdExtended::try_from_hex(hex_str)?;
 
-        assert_eq!(
-            0b000_011_0_0_11110000_00000100_00000000,
-            id_a.try_into_bits()?
-        );
+        assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
         assert_eq!(3, id_a.priority());
         assert_eq!(false, id_a.reserved());
         assert_eq!(false, id_a.data_page());
@@ -602,7 +510,7 @@ mod id_tests {
 
         let id_a = IdStandard::try_from_bits(bits)?;
 
-        assert_eq!(0b00000_000_0_0_001111, id_a.try_into_bits()?);
+        assert_eq!(0b00000_000_0_0_001111, id_a.into_bits());
         assert_eq!(0, id_a.priority());
         assert_eq!(false, id_a.reserved());
         assert_eq!(false, id_a.data_page());
@@ -618,7 +526,7 @@ mod id_tests {
         let id_hex = "0CF00400";
         let id_a = IdExtended::try_from_bits(id_dec)?;
 
-        assert_eq!(id_hex, id_a.try_into_hex()?);
+        assert_eq!(id_hex, id_a.into_hex());
 
         Ok(())
     }
