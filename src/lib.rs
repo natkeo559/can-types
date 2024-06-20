@@ -3,7 +3,7 @@
 //! ## Supported CAN Protocols
 //! This crate provides decoding capabilities for Controller Area Network (CAN) protocols utilizing both 11-bit and 29-bit identifiers.
 //! - **CAN 2.0 (Classical CAN)**: Commonly used in automotive applications and industrial automation.
-//! - **SAE J1939**
+//! - **SAE J1939**: Commonly used in heavy-duty trucks and buses.
 //!
 //! ## `no_std` Support
 //! This crate supports `no_std`, meaning it can be used in resource-constrained environments like embedded systems and `IoT` devices, allowing for minimal memory usage without compromising functionality.
@@ -14,7 +14,7 @@
 //! ```
 //!
 //! ### `no_std` limitations:
-//! - This mode does not support generating `String` or string slice hexadecimal representations of the provided data structures.
+//! - This mode does not support generating [`String`](crate::prelude::String) or string slice hexadecimal representations of the provided data structures.
 //!
 //! See [Conversion](crate::prelude::Conversion) for more details.
 //!

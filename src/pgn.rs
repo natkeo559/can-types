@@ -104,7 +104,7 @@ pub struct PgnBits {
 impl Conversion<u32> for PgnBits {
     type Error = anyhow::Error;
 
-    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
+    /// Creates a new [`PgnBits`] bitfield from a 32-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
@@ -116,7 +116,7 @@ impl Conversion<u32> for PgnBits {
         Ok(Self(bits))
     }
 
-    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`PgnBits`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 18-bit PGNs.
@@ -130,12 +130,12 @@ impl Conversion<u32> for PgnBits {
         Ok(Self(bits))
     }
 
-    /// Creates a new 32-bit integer from the `PgnBits` bitfield.
+    /// Creates a new 32-bit integer from the [`PgnBits`] bitfield.
     fn into_bits(self) -> u32 {
         self.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the `PgnBits` bitfield.
+    /// Creates a new base-16 (hex) `String` from the [`PgnBits`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
@@ -143,12 +143,12 @@ impl Conversion<u32> for PgnBits {
         format(format_args!("{:05X}", self.into_bits()))
     }
 
-    /// Creates a new `PgnBits` bitfield from a 32-bit integer.
+    /// Creates a new [`PgnBits`] bitfield from a 32-bit integer.
     fn from_bits(bits: u32) -> Self {
         Self(bits)
     }
 
-    /// Creates a new `PgnBits` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`PgnBits`] bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
         let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
 
@@ -258,7 +258,7 @@ impl PgnBits {
 }
 
 impl IdExtended {
-    /// Computes the PGN bitfield value based on the extended identifier fields.
+    /// Computes the PGN bitfield value based on the 29-bit identifier fields.
     ///
     /// # Returns
     /// The combined PGN bitfield value.
@@ -273,10 +273,10 @@ impl IdExtended {
         pgn_bitfield.into_bits()
     }
 
-    /// Constructs and returns a `PgnBits` struct based on the extended identifier fields.
+    /// Constructs and returns a [`PgnBits`] struct based on the extended 29-bit fields.
     ///
     /// # Returns
-    /// A `PgnBits` bitfield initialized with the extended identifier fields.
+    /// A [`PgnBits`] bitfield initialized with the 29-bit identifier fields.
     #[must_use]
     pub const fn pgn(&self) -> PgnBits {
         PgnBits::new()

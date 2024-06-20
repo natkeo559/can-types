@@ -117,14 +117,14 @@ pub type PduName = Pdu<Name>;
 impl Conversion<u64> for PduData {
     type Error = anyhow::Error;
 
-    /// Creates a new `Data` bitfield from a 64-bit integer.
+    /// Creates a new [`Data`] bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u64) -> Result<Self, Self::Error> {
         Ok(Self(Data(bits)))
     }
 
-    /// Creates a new `Data` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Data`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
@@ -133,12 +133,12 @@ impl Conversion<u64> for PduData {
         Ok(Self(Data(bits)))
     }
 
-    /// Creates a new 64-bit integer from the `Data` bitfield.
+    /// Creates a new 64-bit integer from the [`Data`] bitfield.
     fn into_bits(self) -> u64 {
         self.0.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the `Data` bitfield.
+    /// Creates a new base-16 (hex) [`String`] from the [`Data`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
@@ -146,12 +146,12 @@ impl Conversion<u64> for PduData {
         format(format_args!("{:016X}", self.0.into_bits()))
     }
 
-    /// Creates a new `Data` bitfield from a 64-bit integer.
+    /// Creates a new [`Data`] bitfield from a 64-bit integer.
     fn from_bits(bits: u64) -> Self {
         Self(Data(bits))
     }
 
-    /// Creates a new `Data` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Data`] bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
         let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
 
@@ -208,31 +208,31 @@ impl Pdu<Data> {
         self.0.byte_7_bits()
     }
 
-    /// Return the 64-bit `Data` bitfield as little-endian bytes.
+    /// Return the 64-bit [`Data`] bitfield as little-endian bytes.
     #[must_use]
     pub const fn to_le_bytes(&self) -> [u8; 8] {
         self.0.into_bits().to_le_bytes()
     }
 
-    /// Return the 64-bit `Data` bitfield as big-endian bytes.
+    /// Return the 64-bit [`Data`] bitfield as big-endian bytes.
     #[must_use]
     pub const fn to_be_bytes(&self) -> [u8; 8] {
         self.0.into_bits().to_be_bytes()
     }
 
-    /// Return the 64-bit `Data` bitfield as native-endian bytes.
+    /// Return the 64-bit [`Data`] bitfield as native-endian bytes.
     #[must_use]
     pub const fn to_ne_bytes(&self) -> [u8; 8] {
         self.0.into_bits().to_ne_bytes()
     }
 
-    /// Convert the `Data` bitfield to little-endian byte format.
+    /// Convert the [`Data`] bitfield to little-endian byte format.
     #[must_use]
     pub const fn to_le(&self) -> Self {
         Self(Data(self.0.into_bits().to_le()))
     }
 
-    /// Convert the `Data` bitfield to big-endian byte format.
+    /// Convert the [`Data`] bitfield to big-endian byte format.
     #[must_use]
     pub const fn to_be(&self) -> Self {
         Self(Data(self.0.into_bits().to_be()))
@@ -242,14 +242,14 @@ impl Pdu<Data> {
 impl Conversion<u64> for PduName {
     type Error = anyhow::Error;
 
-    /// Creates a new `Name` bitfield from a 64-bit integer.
+    /// Creates a new [`Name`] bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u64) -> Result<Self, Self::Error> {
         Ok(Self(Name(bits)))
     }
 
-    /// Creates a new `Name` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Name`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If invalid encoding of provided Base16 string
     /// - If insufficient output buffer length
@@ -259,12 +259,12 @@ impl Conversion<u64> for PduName {
         Ok(Self(Name(bits)))
     }
 
-    /// Creates a new 64-bit integer from the `Name` bitfield.
+    /// Creates a new 64-bit integer from the [`Name`] bitfield.
     fn into_bits(self) -> u64 {
         self.0.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the `Name` bitfield.
+    /// Creates a new base-16 (hex) [`String`] from the [`Name`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
@@ -272,12 +272,12 @@ impl Conversion<u64> for PduName {
         format(format_args!("{:016X}", self.0.into_bits()))
     }
 
-    /// Creates a new `Name` bitfield from a 64-bit integer.
+    /// Creates a new [`Name`] bitfield from a 64-bit integer.
     fn from_bits(bits: u64) -> Self {
         Self(Name(bits))
     }
 
-    /// Creates a new `Name` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Name`] bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
         let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
 

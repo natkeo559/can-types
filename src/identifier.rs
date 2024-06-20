@@ -97,7 +97,7 @@ pub type IdStandard = Id<Standard>;
 impl Conversion<u32> for IdExtended {
     type Error = anyhow::Error;
 
-    /// Creates a new `IdExtended` bitfield from a 32-bit integer.
+    /// Creates a new [`Extended`] bitfield from a 32-bit integer.
     /// # Errors
     /// - If value out of range for valid 29-bit identifiers
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
@@ -107,34 +107,34 @@ impl Conversion<u32> for IdExtended {
                 bits
             ));
         }
-        let bitfield: Extended = Extended(bits);
+        let bitfield = Extended(bits);
 
         Ok(Self(bitfield))
     }
 
-    /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Extended`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 29-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let bits: u32 = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
+        let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
             return Err(anyhow::anyhow!(
                 "Identifier bits out of range! Valid range is 0x00000000..0x1FFFFFFF - got {:#08X}",
                 bits
             ));
         }
-        let bitfield: Extended = Extended(bits);
+        let bitfield = Extended(bits);
 
         Ok(Self(bitfield))
     }
 
-    /// Creates a new 32-bit integer from the `IdExtended` bitfield.
+    /// Creates a new 32-bit integer from the [`Extended`] bitfield.
     fn into_bits(self) -> u32 {
         self.0.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the `IdExtended` bitfield.
+    /// Creates a new base-16 (hex) `String` from the [`Extended`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
@@ -142,17 +142,17 @@ impl Conversion<u32> for IdExtended {
         format(format_args!("{:08X}", self.0.into_bits()))
     }
 
-    /// Creates a new `IdExtended` bitfield from a 32-bit integer.
+    /// Creates a new [`Extended`] bitfield from a 32-bit integer.
     fn from_bits(bits: u32) -> Self {
-        let bitfield: Extended = Extended(bits);
+        let bitfield = Extended(bits);
 
         Self(bitfield)
     }
 
-    /// Creates a new `IdExtended` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Extended`] bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let bits: u32 = u32::from_str_radix(hex_str, 16).unwrap_or_default();
-        let bitfield: Extended = Extended(bits);
+        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
+        let bitfield = Extended(bits);
 
         Self(bitfield)
     }
@@ -161,7 +161,7 @@ impl Conversion<u32> for IdExtended {
 impl Conversion<u16> for IdStandard {
     type Error = anyhow::Error;
 
-    /// Creates a new `IdStandard` bitfield from a 16-bit integer.
+    /// Creates a new [`Standard`] bitfield from a 16-bit integer.
     /// # Errors
     /// - If value out of range for valid 11-bit identifiers
     fn try_from_bits(bits: u16) -> Result<Self, Self::Error> {
@@ -171,34 +171,34 @@ impl Conversion<u16> for IdStandard {
                 bits
             ));
         }
-        let bitfield: Standard = Standard(bits);
+        let bitfield = Standard(bits);
 
         Ok(Self(bitfield))
     }
 
-    /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Standard`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 11-bit identifiers
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
-        let bits: u16 = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
+        let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
             return Err(anyhow::anyhow!(
                 "Identifier bits out of range! Valid range is 0x000..0x7FF - got {:#03X}",
                 bits
             ));
         }
-        let bitfield: Standard = Standard(bits);
+        let bitfield = Standard(bits);
 
         Ok(Self(bitfield))
     }
 
-    /// Creates a new 16-bit integer from the `IdStandard` bitfield.
+    /// Creates a new 16-bit integer from the [`Standard`] bitfield.
     fn into_bits(self) -> u16 {
         self.0.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the `IdStandard` bitfield.
+    /// Creates a new base-16 (hex) `String` from the [`Standard`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
@@ -206,24 +206,24 @@ impl Conversion<u16> for IdStandard {
         format(format_args!("{:03X}", self.0.into_bits()))
     }
 
-    /// Creates a new `IdStandard` bitfield from a 16-bit integer.
+    /// Creates a new [`Standard`] bitfield from a 16-bit integer.
     fn from_bits(bits: u16) -> Self {
-        let bitfield: Standard = Standard(bits);
+        let bitfield = Standard(bits);
 
         Self(bitfield)
     }
 
-    /// Creates a new `IdStandard` bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Standard`] bitfield from a base-16 (hex) string slice.
     fn from_hex(hex_str: &str) -> Self {
-        let bits: u16 = u16::from_str_radix(hex_str, 16).unwrap_or_default();
-        let bitfield: Standard = Standard(bits);
+        let bits = u16::from_str_radix(hex_str, 16).unwrap_or_default();
+        let bitfield = Standard(bits);
 
         Self(bitfield)
     }
 }
 
 impl IdExtended {
-    /// Decomposes the `IdExtended` into its raw parts.
+    /// Decomposes the [`IdExtended`] into its raw parts.
     ///
     /// Returns a tuple containing the priority, reserved flag, data page flag,
     /// PDU format, PDU specific, and source address bits.
@@ -239,7 +239,7 @@ impl IdExtended {
         (p, r, dp, pf, ps, sa)
     }
 
-    /// Constructs an `IdExtended` from its raw parts.
+    /// Constructs an [`IdExtended`] from its raw parts.
     ///
     /// # Arguments
     /// - `priority`: Priority bits as `u8`.
@@ -317,7 +317,7 @@ impl IdExtended {
 }
 
 impl IdStandard {
-    /// Decomposes the `IdStandard` into its raw parts.
+    /// Decomposes the [`IdStandard`] into its raw parts.
     ///
     /// Returns a tuple containing the priority, reserved flag, data page flag,
     /// and PDU format bits.
@@ -331,7 +331,7 @@ impl IdStandard {
         (p, r, dp, pf)
     }
 
-    /// /// Constructs an `IdStandard` from its raw parts.
+    /// Constructs an [`IdStandard`] from its raw parts.
     ///
     /// # Arguments
     /// - `priority`: Priority bits as `u8`.
