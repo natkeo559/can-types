@@ -14,7 +14,7 @@
 //! ```
 //!
 //! ### `no_std` limitations:
-//! - This mode does not support generating [`String`](crate::prelude::String) or string slice hexadecimal representations of the provided data structures.
+//! - This mode does not support generating [`String`](alloc::string::String) or string slice hexadecimal representations of the provided data structures.
 //!
 //! See [Conversion](crate::prelude::Conversion) for more details.
 //!
