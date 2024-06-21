@@ -32,6 +32,12 @@ where
     type Error;
 
     /// Convert an integer of type `T` into `Self`
+    fn from_bits(bits: T) -> Self;
+
+    /// Convert a hexadecimal string slice into `Self`
+    fn from_hex(hex_str: &str) -> Self;
+
+    /// Convert an integer of type `T` into `Self`
     /// # Errors
     /// - Implementation dependent
     fn try_from_bits(bits: T) -> Result<Self, Self::Error>;
@@ -49,12 +55,6 @@ where
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String;
-
-    /// Convert an integer of type `T` into `Self`
-    fn from_bits(bits: T) -> Self;
-
-    /// Convert a hexadecimal string slice into `Self`
-    fn from_hex(hex_str: &str) -> Self;
 }
 
 impl From<PduData> for PduName {

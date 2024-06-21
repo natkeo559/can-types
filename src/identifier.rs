@@ -98,6 +98,21 @@ impl Conversion<u32> for IdExtended {
     type Error = anyhow::Error;
 
     /// Creates a new [`Extended`] bitfield from a 32-bit integer.
+    fn from_bits(bits: u32) -> Self {
+        let bitfield = Extended(bits);
+
+        Self(bitfield)
+    }
+
+    /// Creates a new [`Extended`] bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
+        let bitfield = Extended(bits);
+
+        Self(bitfield)
+    }
+
+    /// Creates a new [`Extended`] bitfield from a 32-bit integer.
     /// # Errors
     /// - If value out of range for valid 29-bit identifiers
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
@@ -141,25 +156,25 @@ impl Conversion<u32> for IdExtended {
     fn into_hex(self) -> String {
         format(format_args!("{:08X}", self.0.into_bits()))
     }
-
-    /// Creates a new [`Extended`] bitfield from a 32-bit integer.
-    fn from_bits(bits: u32) -> Self {
-        let bitfield = Extended(bits);
-
-        Self(bitfield)
-    }
-
-    /// Creates a new [`Extended`] bitfield from a base-16 (hex) string slice.
-    fn from_hex(hex_str: &str) -> Self {
-        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
-        let bitfield = Extended(bits);
-
-        Self(bitfield)
-    }
 }
 
 impl Conversion<u16> for IdStandard {
     type Error = anyhow::Error;
+
+    /// Creates a new [`Standard`] bitfield from a 16-bit integer.
+    fn from_bits(bits: u16) -> Self {
+        let bitfield = Standard(bits);
+
+        Self(bitfield)
+    }
+
+    /// Creates a new [`Standard`] bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let bits = u16::from_str_radix(hex_str, 16).unwrap_or_default();
+        let bitfield = Standard(bits);
+
+        Self(bitfield)
+    }
 
     /// Creates a new [`Standard`] bitfield from a 16-bit integer.
     /// # Errors
@@ -204,21 +219,6 @@ impl Conversion<u16> for IdStandard {
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:03X}", self.0.into_bits()))
-    }
-
-    /// Creates a new [`Standard`] bitfield from a 16-bit integer.
-    fn from_bits(bits: u16) -> Self {
-        let bitfield = Standard(bits);
-
-        Self(bitfield)
-    }
-
-    /// Creates a new [`Standard`] bitfield from a base-16 (hex) string slice.
-    fn from_hex(hex_str: &str) -> Self {
-        let bits = u16::from_str_radix(hex_str, 16).unwrap_or_default();
-        let bitfield = Standard(bits);
-
-        Self(bitfield)
     }
 }
 

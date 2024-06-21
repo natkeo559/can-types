@@ -19,7 +19,7 @@ if_alloc! {
 
 use bitfield_struct::bitfield;
 
-use crate::{conversion::Conversion, identifier::IdExtended};
+use crate::{address::Addr, conversion::Conversion, identifier::IdExtended};
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,7 +88,7 @@ pub enum DestinationAddress {
 /// | PDU specific bits      | 8           |
 #[bitfield(u32, order = Msb)]
 #[derive(PartialEq, Eq)]
-pub struct PgnBits {
+pub struct Pgn {
     #[bits(14)]
     _padding_bits: u16,
     #[bits(1)]
@@ -101,10 +101,22 @@ pub struct PgnBits {
     pdu_specific_bits: u8,
 }
 
-impl Conversion<u32> for PgnBits {
+impl Conversion<u32> for Pgn {
     type Error = anyhow::Error;
 
-    /// Creates a new [`PgnBits`] bitfield from a 32-bit integer.
+    /// Creates a new [`Pgn`] bitfield from a 32-bit integer.
+    fn from_bits(bits: u32) -> Self {
+        Self(bits)
+    }
+
+    /// Creates a new [`Pgn`] bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
+
+        Self(bits)
+    }
+
+    /// Creates a new [`Pgn`] bitfield from a 32-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
@@ -116,7 +128,7 @@ impl Conversion<u32> for PgnBits {
         Ok(Self(bits))
     }
 
-    /// Creates a new [`PgnBits`] bitfield from a base-16 (hex) string slice.
+    /// Creates a new [`Pgn`] bitfield from a base-16 (hex) string slice.
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 18-bit PGNs.
@@ -130,33 +142,21 @@ impl Conversion<u32> for PgnBits {
         Ok(Self(bits))
     }
 
-    /// Creates a new 32-bit integer from the [`PgnBits`] bitfield.
+    /// Creates a new 32-bit integer from the [`Pgn`] bitfield.
     fn into_bits(self) -> u32 {
         self.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the [`PgnBits`] bitfield.
+    /// Creates a new base-16 (hex) `String` from the [`Pgn`] bitfield.
     /// # Requires
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:05X}", self.into_bits()))
     }
-
-    /// Creates a new [`PgnBits`] bitfield from a 32-bit integer.
-    fn from_bits(bits: u32) -> Self {
-        Self(bits)
-    }
-
-    /// Creates a new [`PgnBits`] bitfield from a base-16 (hex) string slice.
-    fn from_hex(hex_str: &str) -> Self {
-        let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
-
-        Self(bits)
-    }
 }
 
-impl PgnBits {
+impl Pgn {
     /// Returns the PDU format based on the parsed bits.
     ///
     /// # Returns
@@ -257,6 +257,22 @@ impl PgnBits {
     }
 }
 
+impl DestinationAddress {
+    /// Lookup and translate the [`DestinationAddress`] object.
+    ///
+    /// # Returns
+    /// - `Some(Addr)`: If generic J1939 address is known.
+    /// - `None`: If the pdu specific bits do not contain a destination address.
+    ///
+    #[must_use]
+    pub fn lookup(self) -> Option<Addr> {
+        match self {
+            DestinationAddress::Some(value) => Some(value.into()),
+            DestinationAddress::None => None,
+        }
+    }
+}
+
 impl IdExtended {
     /// Computes the PGN bitfield value based on the 29-bit identifier fields.
     ///
@@ -264,7 +280,7 @@ impl IdExtended {
     /// The combined PGN bitfield value.
     #[must_use]
     pub const fn pgn_bits(&self) -> u32 {
-        let pgn_bitfield = PgnBits::new()
+        let pgn_bitfield = Pgn::new()
             .with_reserved_bits(self.reserved())
             .with_data_page_bits(self.data_page())
             .with_pdu_format_bits(self.pdu_format())
@@ -273,13 +289,13 @@ impl IdExtended {
         pgn_bitfield.into_bits()
     }
 
-    /// Constructs and returns a [`PgnBits`] struct based on the extended 29-bit fields.
+    /// Constructs and returns a [`Pgn`] struct based on the 29-bit identifier fields.
     ///
     /// # Returns
-    /// A [`PgnBits`] bitfield initialized with the 29-bit identifier fields.
+    /// A [`Pgn`] bitfield initialized with the 29-bit identifier fields.
     #[must_use]
-    pub const fn pgn(&self) -> PgnBits {
-        PgnBits::new()
+    pub const fn pgn(&self) -> Pgn {
+        Pgn::new()
             .with_reserved_bits(self.reserved())
             .with_data_page_bits(self.data_page())
             .with_pdu_format_bits(self.pdu_format())
@@ -289,13 +305,13 @@ impl IdExtended {
 
 #[cfg(test)]
 mod pgn_tests {
-    use crate::{
-        conversion::Conversion,
-        identifier::IdExtended,
-        pgn::{CommunicationMode, DestinationAddress, GroupExtension, PduAssignment, PduFormat},
-    };
+    // use crate::{
+    //     conversion::Conversion,
+    //     identifier::IdExtended,
+    //     pgn::{CommunicationMode, DestinationAddress, GroupExtension, PduAssignment, PduFormat},
+    // };
 
-    extern crate std;
+    use super::*;
 
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {
@@ -313,8 +329,6 @@ mod pgn_tests {
         assert_eq!(PduAssignment::Sae(65170), assignment_b);
         assert_eq!(PduAssignment::Manufacturer(65313), assignment_c);
         assert_eq!(PduAssignment::Sae(41), assignment_d);
-
-        std::println!();
 
         Ok(())
     }
@@ -355,6 +369,7 @@ mod pgn_tests {
         assert_eq!(DestinationAddress::None, dest_addr_b);
         assert_eq!(DestinationAddress::None, dest_addr_c);
         assert_eq!(DestinationAddress::Some(41), dest_addr_d);
+        assert_eq!(Some(Addr::RetarderExhaustEngine1), dest_addr_d.lookup());
 
         Ok(())
     }

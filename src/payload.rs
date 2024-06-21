@@ -118,6 +118,18 @@ impl Conversion<u64> for PduData {
     type Error = anyhow::Error;
 
     /// Creates a new [`Data`] bitfield from a 64-bit integer.
+    fn from_bits(bits: u64) -> Self {
+        Self(Data(bits))
+    }
+
+    /// Creates a new [`Data`] bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
+
+        Self(Data(bits))
+    }
+
+    /// Creates a new [`Data`] bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u64) -> Result<Self, Self::Error> {
@@ -144,18 +156,6 @@ impl Conversion<u64> for PduData {
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:016X}", self.0.into_bits()))
-    }
-
-    /// Creates a new [`Data`] bitfield from a 64-bit integer.
-    fn from_bits(bits: u64) -> Self {
-        Self(Data(bits))
-    }
-
-    /// Creates a new [`Data`] bitfield from a base-16 (hex) string slice.
-    fn from_hex(hex_str: &str) -> Self {
-        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
-
-        Self(Data(bits))
     }
 }
 
@@ -243,6 +243,18 @@ impl Conversion<u64> for PduName {
     type Error = anyhow::Error;
 
     /// Creates a new [`Name`] bitfield from a 64-bit integer.
+    fn from_bits(bits: u64) -> Self {
+        Self(Name(bits))
+    }
+
+    /// Creates a new [`Name`] bitfield from a base-16 (hex) string slice.
+    fn from_hex(hex_str: &str) -> Self {
+        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
+
+        Self(Name(bits))
+    }
+
+    /// Creates a new [`Name`] bitfield from a 64-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
     fn try_from_bits(bits: u64) -> Result<Self, Self::Error> {
@@ -270,18 +282,6 @@ impl Conversion<u64> for PduName {
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:016X}", self.0.into_bits()))
-    }
-
-    /// Creates a new [`Name`] bitfield from a 64-bit integer.
-    fn from_bits(bits: u64) -> Self {
-        Self(Name(bits))
-    }
-
-    /// Creates a new [`Name`] bitfield from a base-16 (hex) string slice.
-    fn from_hex(hex_str: &str) -> Self {
-        let bits = u64::from_str_radix(hex_str, 16).unwrap_or_default();
-
-        Self(Name(bits))
     }
 }
 
