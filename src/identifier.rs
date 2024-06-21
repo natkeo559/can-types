@@ -98,6 +98,16 @@ impl Conversion<u32> for IdExtended {
     type Error = anyhow::Error;
 
     /// Creates a new [`Extended`] bitfield from a 32-bit integer.
+    ///
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let id_a = IdExtended::from_bits(0);
+    /// let id_b = IdExtended::from_bits(4294967295);
+    ///
+    /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
+    /// assert_eq!(0b111_111_1_1_11111111_11111111_11111111, id_b.into_bits());
+    /// ```
     fn from_bits(bits: u32) -> Self {
         let bitfield = Extended(bits);
 
@@ -105,6 +115,16 @@ impl Conversion<u32> for IdExtended {
     }
 
     /// Creates a new [`Extended`] bitfield from a base-16 (hex) string slice.
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let hex_str = "0CF00400";
+    ///
+    /// let id_a = IdExtended::from_hex(hex_str);
+    /// 
+    /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
+    /// assert_eq!(217056256, id_a.into_bits());
+    /// ```
     fn from_hex(hex_str: &str) -> Self {
         let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
         let bitfield = Extended(bits);
@@ -115,6 +135,17 @@ impl Conversion<u32> for IdExtended {
     /// Creates a new [`Extended`] bitfield from a 32-bit integer.
     /// # Errors
     /// - If value out of range for valid 29-bit identifiers
+    /// Creates a new [`Extended`] bitfield from a 32-bit integer.
+    ///
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let id_a = IdExtended::try_from_bits(0);
+    /// let id_b = IdExtended::try_from_bits(4294967295);
+    ///
+    /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.unwrap().into_bits());
+    /// assert!(id_b.is_err());
+    /// ```
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         if bits > 0x1FFF_FFFF {
             return Err(anyhow::anyhow!(
@@ -131,6 +162,17 @@ impl Conversion<u32> for IdExtended {
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 29-bit identifiers
+    ///
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let hex_str = "0CF00400";
+    ///
+    /// let id_a = IdExtended::try_from_hex(hex_str).unwrap();
+    /// 
+    /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
+    /// assert_eq!(217056256, id_a.into_bits());
+    /// ```
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
         let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
@@ -145,6 +187,14 @@ impl Conversion<u32> for IdExtended {
     }
 
     /// Creates a new 32-bit integer from the [`Extended`] bitfield.
+    /// 
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let id_a = IdExtended::from_bits(0);
+    ///
+    /// assert_eq!(0, id_a.into_bits());
+    /// ```
     fn into_bits(self) -> u32 {
         self.0.into_bits()
     }
@@ -152,6 +202,14 @@ impl Conversion<u32> for IdExtended {
     /// Creates a new base-16 (hex) `String` from the [`Extended`] bitfield.
     /// # Requires
     /// - `alloc`
+    /// 
+    /// # Examples
+    /// ```
+    /// # use can_types::prelude::{IdExtended, Conversion};
+    /// let id_a = IdExtended::from_bits(15);
+    ///
+    /// assert_eq!("0000000F", id_a.into_hex());
+    /// ```
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:08X}", self.0.into_bits()))
