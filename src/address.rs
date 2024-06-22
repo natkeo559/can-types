@@ -264,6 +264,54 @@ impl Display for Addr {
     }
 }
 
+/// Represents the source address.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceAddr {
+    /// No source address.
+    None,
+    /// Source address with a specific value.
+    Some(u8),
+}
+
+/// Represents the destination address.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DestinationAddr {
+    /// No destination address.
+    None,
+    /// Destination address with a specific value.
+    Some(u8),
+}
+
+impl SourceAddr {
+    /// Lookup and translate the [`SourceAddr`] object.
+    ///
+    /// # Returns
+    /// - `Some(Addr)`: If generic J1939 address is known.
+    /// - `None`: If the pdu specific bits do not contain a destination address.
+    #[must_use]
+    pub fn lookup(self) -> Option<Addr> {
+        match self {
+            SourceAddr::Some(value) => Some(value.into()),
+            SourceAddr::None => None,
+        }
+    }
+}
+
+impl DestinationAddr {
+    /// Lookup and translate the [`DestinationAddr`] object.
+    ///
+    /// # Returns
+    /// - `Some(Addr)`: If generic J1939 address is known.
+    /// - `None`: If the pdu specific bits do not contain a destination address.
+    #[must_use]
+    pub fn lookup(self) -> Option<Addr> {
+        match self {
+            DestinationAddr::Some(value) => Some(value.into()),
+            DestinationAddr::None => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod sa_tests {
     if_alloc! {

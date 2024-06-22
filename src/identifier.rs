@@ -19,7 +19,7 @@ if_alloc! {
 
 use bitfield_struct::bitfield;
 
-use crate::conversion::Conversion;
+use crate::{address::SourceAddr, conversion::Conversion};
 
 pub trait IdKind {}
 
@@ -121,7 +121,7 @@ impl Conversion<u32> for IdExtended {
     /// let hex_str = "0CF00400";
     ///
     /// let id_a = IdExtended::from_hex(hex_str);
-    /// 
+    ///
     /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
     /// assert_eq!(217056256, id_a.into_bits());
     /// ```
@@ -169,7 +169,7 @@ impl Conversion<u32> for IdExtended {
     /// let hex_str = "0CF00400";
     ///
     /// let id_a = IdExtended::try_from_hex(hex_str).unwrap();
-    /// 
+    ///
     /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
     /// assert_eq!(217056256, id_a.into_bits());
     /// ```
@@ -187,7 +187,7 @@ impl Conversion<u32> for IdExtended {
     }
 
     /// Creates a new 32-bit integer from the [`Extended`] bitfield.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// # use can_types::prelude::{IdExtended, Conversion};
@@ -202,7 +202,7 @@ impl Conversion<u32> for IdExtended {
     /// Creates a new base-16 (hex) `String` from the [`Extended`] bitfield.
     /// # Requires
     /// - `alloc`
-    /// 
+    ///
     /// # Examples
     /// ```
     /// # use can_types::prelude::{IdExtended, Conversion};
@@ -369,8 +369,8 @@ impl IdExtended {
 
     /// Returns the source address bits identifying the source of the data.
     #[must_use]
-    pub const fn source_address(&self) -> u8 {
-        self.0.source_address_bits()
+    pub fn source_address(&self) -> SourceAddr {
+        SourceAddr::Some(self.0.source_address_bits())
     }
 }
 

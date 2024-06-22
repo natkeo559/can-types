@@ -27,7 +27,8 @@
 //!
 //!         # assert_eq!(0b00001100111100000000010000000000, id_a.into_bits());
 //!         assert_eq!(3, id_a.priority());
-//!         assert_eq!(0, id_a.source_address());
+//!         assert_eq!(SourceAddr::Some(0), id_a.source_address());
+//!         assert_eq!(Some(Addr::PrimaryEngineController), id_a.source_address().lookup());
 //!         # Ok(())
 //!     # }
 //! ```
@@ -44,14 +45,16 @@
 //!         let id_b = IdExtended::try_from_hex("0C00290B")?;
 //!         
 //!         // SA 11 = Brake
-//!         assert_eq!(11, id_b.source_address());        
+//!         assert_eq!(SourceAddr::Some(11), id_b.source_address());
+//!         assert_eq!(Some(Addr::Brakes), id_b.source_address().lookup());
 //!
 //!         assert_eq!(PduFormat::Pdu1(0), id_b.pgn().pdu_format());
 //!         assert_eq!(CommunicationMode::P2P, id_b.pgn().communication_mode());
 //!         assert_eq!(GroupExtension::None, id_b.pgn().group_extension());
 //!
 //!         // DA 41 = Retarder, Exhaust, Engine
-//!         assert_eq!(DestinationAddress::Some(41), id_b.pgn().destination_address());
+//!         assert_eq!(DestinationAddr::Some(41), id_b.pgn().destination_address());
+//!         assert_eq!(Some(Addr::RetarderExhaustEngine1), id_b.pgn().destination_address().lookup());   
 //!         # Ok(())
 //!     # }
 //! ```

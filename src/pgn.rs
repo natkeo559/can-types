@@ -19,7 +19,7 @@ if_alloc! {
 
 use bitfield_struct::bitfield;
 
-use crate::{address::Addr, conversion::Conversion, identifier::IdExtended};
+use crate::{address::DestinationAddr, conversion::Conversion, identifier::IdExtended};
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,15 +63,6 @@ pub enum GroupExtension {
     /// No group extension.
     None,
     /// Group extension with a specific value.
-    Some(u8),
-}
-
-/// Represents the destination address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DestinationAddress {
-    /// No destination address.
-    None,
-    /// Destination address with a specific value.
     Some(u8),
 }
 
@@ -122,7 +113,7 @@ impl Conversion<u32> for Pgn {
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         if bits > 0x3FFFF {
             return Err(anyhow::anyhow!(
-                "PGN bits out of range! Valid range is 0x00000..0x3FFFF - got {bits:#05X}"
+                "PGN bits out of range! Valid range is 0x0000..0xFFFF - got {bits:#04X}"
             ));
         }
         Ok(Self(bits))
@@ -136,7 +127,7 @@ impl Conversion<u32> for Pgn {
         let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x3FFFF {
             return Err(anyhow::anyhow!(
-                "PGN bits out of range! Valid range is 0x00000..0x3FFFF - got {bits:#05X}"
+                "PGN bits out of range! Valid range is 0x0000..0xFFFF - got {bits:#04X}"
             ));
         }
         Ok(Self(bits))
@@ -189,10 +180,10 @@ impl Pgn {
     /// - `DestinationAddress::Some(bits)` if the PDU format is `Pdu1`.
     /// - `DestinationAddress::None` if the PDU format is `Pdu2`.
     #[must_use]
-    pub const fn destination_address(&self) -> DestinationAddress {
+    pub const fn destination_address(&self) -> DestinationAddr {
         match self.pdu_format() {
-            PduFormat::Pdu1(_) => DestinationAddress::Some(self.pdu_specific_bits()),
-            PduFormat::Pdu2(_) => DestinationAddress::None,
+            PduFormat::Pdu1(_) => DestinationAddr::Some(self.pdu_specific_bits()),
+            PduFormat::Pdu2(_) => DestinationAddr::None,
         }
     }
 
@@ -257,22 +248,6 @@ impl Pgn {
     }
 }
 
-impl DestinationAddress {
-    /// Lookup and translate the [`DestinationAddress`] object.
-    ///
-    /// # Returns
-    /// - `Some(Addr)`: If generic J1939 address is known.
-    /// - `None`: If the pdu specific bits do not contain a destination address.
-    ///
-    #[must_use]
-    pub fn lookup(self) -> Option<Addr> {
-        match self {
-            DestinationAddress::Some(value) => Some(value.into()),
-            DestinationAddress::None => None,
-        }
-    }
-}
-
 impl IdExtended {
     /// Computes the PGN bitfield value based on the 29-bit identifier fields.
     ///
@@ -312,6 +287,7 @@ mod pgn_tests {
     // };
 
     use super::*;
+    use crate::address::Addr;
 
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {
@@ -365,10 +341,10 @@ mod pgn_tests {
         let dest_addr_c = id_c.pgn().destination_address();
         let dest_addr_d = id_d.pgn().destination_address();
 
-        assert_eq!(DestinationAddress::None, dest_addr_a);
-        assert_eq!(DestinationAddress::None, dest_addr_b);
-        assert_eq!(DestinationAddress::None, dest_addr_c);
-        assert_eq!(DestinationAddress::Some(41), dest_addr_d);
+        assert_eq!(DestinationAddr::None, dest_addr_a);
+        assert_eq!(DestinationAddr::None, dest_addr_b);
+        assert_eq!(DestinationAddr::None, dest_addr_c);
+        assert_eq!(DestinationAddr::Some(41), dest_addr_d);
         assert_eq!(Some(Addr::RetarderExhaustEngine1), dest_addr_d.lookup());
 
         Ok(())
