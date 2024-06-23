@@ -30,4 +30,10 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Run clippy
-      run: cargo clippy -- -W clippy::pedantic
+      run: |
+          if [[ ${{ matrix.toolchain }} == 'stable' ]]; then
+            rustup component add clippy
+            cargo clippy -- -W clippy::pedantic
+          else
+            echo "We run clippy on stable only."
+          fi
