@@ -1,6 +1,6 @@
 [package]
 name = "can-types"
-version = "1.0.0"
+version = "0.1.0"
 authors = ["Nathan Keough <nhkeoug@gmail.com>"]
 edition = "2021"
 keywords = ["can", "vehicle", "j1939", "decode", "ecu"]
