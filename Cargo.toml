@@ -1,13 +1,13 @@
 [package]
 name = "can-types"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Nathan Keough <nhkeoug@gmail.com>"]
 edition = "2021"
 keywords = ["can", "vehicle", "j1939", "decode", "ecu"]
 readme = "README.md"
 repository = "https://github.com/natkeo559/can-types"
 homepage = "https://github.com/natkeo559/can-types"
-# documentation = "https://docs.rs/can-types"
+documentation = "https://docs.rs/can-types"
 categories = ["no-std"]
 description = """
 A library for encoding/decoding simple CAN bus data structures
