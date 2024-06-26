@@ -19,7 +19,10 @@ if_alloc! {
 
 use bitfield_struct::bitfield;
 
-use crate::{address::DestinationAddr, conversion::Conversion, identifier::IdExtended};
+use crate::{
+    conversion::Conversion, identifier::Id, protocol::j1939::address::DestinationAddr,
+    protocol::j1939::identifier::J1939,
+};
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -248,7 +251,7 @@ impl Pgn {
     }
 }
 
-impl IdExtended {
+impl Id<J1939> {
     /// Computes the PGN bitfield value based on the 29-bit identifier fields.
     ///
     /// # Returns
@@ -287,14 +290,14 @@ mod pgn_tests {
     // };
 
     use super::*;
-    use crate::address::Addr;
+    use crate::protocol::j1939::address::Addr;
 
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let assignment_a = id_a.pgn().pdu_assignment();
         let assignment_b = id_b.pgn().pdu_assignment();
@@ -311,10 +314,10 @@ mod pgn_tests {
 
     #[test]
     fn test_communication_mode() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let comms_mode_a = id_a.pgn().communication_mode();
         let comms_mode_b = id_b.pgn().communication_mode();
@@ -331,10 +334,10 @@ mod pgn_tests {
 
     #[test]
     fn test_destination_address() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let dest_addr_a = id_a.pgn().destination_address();
         let dest_addr_b = id_b.pgn().destination_address();
@@ -352,10 +355,10 @@ mod pgn_tests {
 
     #[test]
     fn test_group_extension() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let group_ext_a = id_a.pgn().group_extension();
         let group_ext_b = id_b.pgn().group_extension();
@@ -372,10 +375,10 @@ mod pgn_tests {
 
     #[test]
     fn test_pdu_format() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let pdu_format_a = id_a.pgn().pdu_format();
         let pdu_format_b = id_b.pgn().pdu_format();
@@ -392,10 +395,10 @@ mod pgn_tests {
 
     #[test]
     fn test_pgn_bits() -> Result<(), anyhow::Error> {
-        let id_a = IdExtended::try_from_hex("18FEF200")?;
-        let id_b = IdExtended::try_from_hex("1CFE9201")?;
-        let id_c = IdExtended::try_from_hex("10FF2121")?;
-        let id_d = IdExtended::try_from_hex("0C00290B")?;
+        let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+        let id_b = Id::<J1939>::try_from_hex("1CFE9201")?;
+        let id_c = Id::<J1939>::try_from_hex("10FF2121")?;
+        let id_d = Id::<J1939>::try_from_hex("0C00290B")?;
 
         let pgn_bits_a = id_a.pgn();
         let pgn_bits_b = id_b.pgn();

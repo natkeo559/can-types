@@ -17,8 +17,9 @@ if_alloc! {
     use crate::alloc::string::String;
 }
 
-use crate::identifier::{IdExtended, IdStandard};
-use crate::payload::{PduData, PduName};
+use crate::identifier::Id;
+use crate::prelude::{Data, Name, Pdu};
+use crate::protocol::{Can2A, Can2B};
 
 /// A trait for types that can be converted to and from bitfield representations (`bits`)
 /// of integers and hexadecimal string slices (hex).
@@ -57,51 +58,51 @@ where
     fn into_hex(self) -> String;
 }
 
-impl From<PduData> for PduName {
-    fn from(value: PduData) -> Self {
+impl From<Pdu<Data>> for Pdu<Name> {
+    fn from(value: Pdu<Data>) -> Self {
         Self::from_bits(value.into_bits())
     }
 }
 
-impl From<PduName> for PduData {
-    fn from(value: PduName) -> Self {
+impl From<Pdu<Name>> for Pdu<Data> {
+    fn from(value: Pdu<Name>) -> Self {
         Self::from_bits(value.into_bits())
     }
 }
 
-impl From<IdStandard> for IdExtended {
-    fn from(value: IdStandard) -> Self {
+impl From<Id<Can2A>> for Id<Can2B> {
+    fn from(value: Id<Can2A>) -> Self {
         Self::from_bits(value.into_bits().into())
     }
 }
 
 #[cfg(test)]
 mod impl_tests {
-    use crate::prelude::{PduData, PduName};
+    use crate::prelude::{Data, Name, Pdu};
 
     use super::*;
 
     #[test]
     fn test_data_from() {
-        let name_a = PduName::from_hex("FFFF82DF1AFFFFFF");
-        let data_a = PduData::from(name_a);
+        let name_a = Pdu::<Name>::from_hex("FFFF82DF1AFFFFFF");
+        let data_a = Pdu::<Data>::from(name_a);
 
-        assert_eq!(PduData::from_hex("FFFF82DF1AFFFFFF"), data_a);
+        assert_eq!(Pdu::<Data>::from_hex("FFFF82DF1AFFFFFF"), data_a);
     }
 
     #[test]
     fn test_name_from() {
-        let data_a: PduData = PduData::from_hex("FFFF82DF1AFFFFFF");
-        let name_a: PduName = PduName::from(data_a);
+        let data_a = Pdu::<Data>::from_hex("FFFF82DF1AFFFFFF");
+        let name_a = Pdu::<Name>::from(data_a);
 
-        assert_eq!(PduName::from_hex("FFFF82DF1AFFFFFF"), name_a);
+        assert_eq!(Pdu::<Name>::from_hex("FFFF82DF1AFFFFFF"), name_a);
     }
 
     #[test]
     fn test_extended_from() {
-        let id_std_a = IdStandard::from_hex("00F");
-        let id_ext_a = IdExtended::from(id_std_a);
+        let id_std_a = Id::<Can2A>::from_hex("00F");
+        let id_ext_a = Id::<Can2B>::from(id_std_a);
 
-        assert_eq!(IdExtended::from_hex("0000000F"), id_ext_a);
+        assert_eq!(Id::<Can2B>::from_hex("0000000F"), id_ext_a);
     }
 }

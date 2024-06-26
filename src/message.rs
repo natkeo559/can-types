@@ -13,38 +13,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::prelude::{
-    Conversion, Data, Extended, Id, IdExtended, IdKind, Name, Pdu, PduData, PduKind, PduName,
-};
+use crate::prelude::{Conversion, Data, Id, IsDataUnit, IsProtocol, Name, Pdu, J1939};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Message<I: IdKind, P: PduKind> {
-    id: Id<I>,
-    pdu: Pdu<P>,
+pub struct Message<P: IsProtocol, U: IsDataUnit> {
+    id: Id<P>,
+    pdu: Pdu<U>,
 }
 
-impl Message<Extended, Data> {
-    /// Constructs a new [`Message`] from its parts: an identifier and pdu.
+impl Message<J1939, Data> {
+    /// Constructs a new Message from its parts: a 29-bit J1939 identifier and pdu containing 64 bits of generic data.
     ///
     /// # Arguments
-    /// - `id`: An [`IdExtended`] representing the 29-bit identifier of the message.
-    /// - `pdu`: A [`PduData`] containing the payload or content of the message.
+    /// - `id`: An [`Id<J1939>`] representing the 29-bit identifier of the message.
+    /// - `pdu`: A [`Pdu<Data>`] containing the payload or content of the message.
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the provided parts.
     #[must_use]
-    pub fn from_parts(id: IdExtended, pdu: PduData) -> Self {
+    pub fn from_parts(id: Id<J1939>, pdu: Pdu<Data>) -> Self {
         Self { id, pdu }
     }
 
-    /// Destructures the [`Message`] into its parts: an identifier and pdu.
+    /// Destructures the [`Message`] into its parts: a 29-bit J1939 identifier and pdu containing 64 bits of generic data.
     ///
     /// # Returns
     /// A tuple containing:
-    /// - An [`IdExtended`] representing the 29-bit identifier.
-    /// - A [`PduData`] containing the payload or content of the message.
+    /// - An [`Id<J1939>`] representing the 29-bit identifier.
+    /// - A [`Pdu<Data>`] containing the payload or content of the message.
     #[must_use]
-    pub fn into_parts(self) -> (Id<Extended>, PduData) {
+    pub fn into_parts(self) -> (Id<J1939>, Pdu<Data>) {
         (self.id, self.pdu)
     }
 
@@ -53,8 +51,8 @@ impl Message<Extended, Data> {
     /// - If failed to construct the identifier field from bits
     /// - If failed to construct the pdu field from bits
     pub fn try_from_bits(hex_id: u32, hex_pdu: u64) -> Result<Self, anyhow::Error> {
-        let id = IdExtended::try_from_bits(hex_id)?;
-        let pdu = PduData::try_from_bits(hex_pdu)?;
+        let id = Id::<J1939>::from_bits(hex_id);
+        let pdu = Pdu::<Data>::try_from_bits(hex_pdu)?;
 
         Ok(Self { id, pdu })
     }
@@ -64,8 +62,106 @@ impl Message<Extended, Data> {
     /// - If failed to construct the identifier field from hex
     /// - If failed to construct the pdu field from hex
     pub fn try_from_hex(hex_id: &str, hex_pdu: &str) -> Result<Self, anyhow::Error> {
-        let id = IdExtended::try_from_hex(hex_id)?;
-        let pdu = PduData::try_from_hex(hex_pdu)?;
+        let id = Id::<J1939>::try_from_hex(hex_id)?;
+        let pdu = Pdu::<Data>::try_from_hex(hex_pdu)?;
+
+        Ok(Self { id, pdu })
+    }
+
+    /// Constructs a new [`Message`] from raw bit representations of its components.
+    ///
+    /// # Arguments
+    /// - `hex_id`: A `u32` representing the hexadecimal encoded 29-bit J1939 identifier.
+    /// - `hex_pdu`: A `u64` representing the hexadecimal encoded pdu.
+    ///
+    /// # Returns
+    /// A new [`Message`] instance initialized with the decoded components.
+    #[must_use]
+    pub fn from_bits(hex_id: u32, hex_pdu: u64) -> Self {
+        let id = Id::<J1939>::from_bits(hex_id);
+        let pdu = Pdu::<Data>::from_bits(hex_pdu);
+
+        Self { id, pdu }
+    }
+
+    /// Constructs a new [`Message`] from hexadecimal string representations of its components.
+    ///
+    /// # Arguments
+    /// - `hex_id`: A `&str` representing the hexadecimal encoded 29-bit J1939 identifier.
+    /// - `hex_pdu`: A `&str` representing the hexadecimal encoded pdu.
+    ///
+    /// # Returns
+    /// A new [`Message`] instance initialized with the decoded components.
+    #[must_use]
+    pub fn from_hex(hex_id: &str, hex_pdu: &str) -> Self {
+        let id = Id::<J1939>::from_hex(hex_id);
+        let pdu = Pdu::<Data>::from_hex(hex_pdu);
+
+        Self { id, pdu }
+    }
+
+    /// Retrieves the 29-bit J1939 identifier from the message.
+    ///
+    /// # Returns
+    /// The [`Id<J1939>`] bitfield associated with the message.
+    #[must_use]
+    pub fn id(&self) -> Id<J1939> {
+        self.id
+    }
+
+    /// Retrieves the pdu from the message.
+    ///
+    /// # Returns
+    /// The [`Pdu<Data>`] bitfield associated with the message.
+    #[must_use]
+    pub fn pdu(&self) -> Pdu<Data> {
+        self.pdu
+    }
+}
+
+impl Message<J1939, Name> {
+    /// Constructs a new [`Message`] from its parts: an identifier and pdu.
+    ///
+    /// # Arguments
+    /// - `id`: An [`Id<J1939>`] representing the 29-bit identifier of the message.
+    /// - `pdu`: A [`Pdu<Data>`] containing the payload or content of the message.
+    ///
+    /// # Returns
+    /// A new [`Message`] instance initialized with the provided parts.
+    #[must_use]
+    pub fn from_parts(id: Id<J1939>, pdu: Pdu<Name>) -> Self {
+        Self { id, pdu }
+    }
+
+    /// Destructures the [`Message`] into its parts: an identifier and pdu.
+    ///
+    /// # Returns
+    /// A tuple containing:
+    /// - An [`Id<J1939>`] representing the 29-bit identifier.
+    /// - A [`Pdu<Data>`] containing the payload or content of the message.
+    #[must_use]
+    pub fn into_parts(self) -> (Id<J1939>, Pdu<Name>) {
+        (self.id, self.pdu)
+    }
+
+    /// Constructs a new [`Message`] from raw bit representations of its components.
+    /// # Errors
+    /// - If failed to construct the identifier field from bits
+    /// - If failed to construct the pdu field from bits
+    pub fn try_from_bits(hex_id: u32, hex_pdu: u64) -> Result<Self, anyhow::Error> {
+        let id = Id::<J1939>::try_from_bits(hex_id)?;
+        let pdu = Pdu::<Name>::try_from_bits(hex_pdu)?;
+
+        Ok(Self { id, pdu })
+    }
+
+    /// Constructs a new [`Message`] from hexadecimal string representations of its components.
+    /// # Errors
+    /// - If failed to construct the identifier field from hex
+    /// - If failed to construct the pdu field from hex
+    pub fn try_from_hex(hex_id: &str, hex_pdu: &str) -> Result<Self, anyhow::Error> {
+        let id = Id::<J1939>::try_from_hex(hex_id)?;
+        let pdu = Pdu::<Name>::try_from_hex(hex_pdu)?;
 
         Ok(Self { id, pdu })
     }
@@ -80,8 +176,8 @@ impl Message<Extended, Data> {
     /// A new [`Message`] instance initialized with the decoded components.
     #[must_use]
     pub fn from_bits(hex_id: u32, hex_pdu: u64) -> Self {
-        let id = IdExtended::from_bits(hex_id);
-        let pdu = PduData::from_bits(hex_pdu);
+        let id = Id::<J1939>::from_bits(hex_id);
+        let pdu = Pdu::<Name>::from_bits(hex_pdu);
 
         Self { id, pdu }
     }
@@ -96,8 +192,8 @@ impl Message<Extended, Data> {
     /// A new [`Message`] instance initialized with the decoded components.
     #[must_use]
     pub fn from_hex(hex_id: &str, hex_pdu: &str) -> Self {
-        let id = IdExtended::from_hex(hex_id);
-        let pdu = PduData::from_hex(hex_pdu);
+        let id = Id::<J1939>::from_hex(hex_id);
+        let pdu = Pdu::<Name>::from_hex(hex_pdu);
 
         Self { id, pdu }
     }
@@ -105,122 +201,24 @@ impl Message<Extended, Data> {
     /// Retrieves the 29-bit identifier from the message.
     ///
     /// # Returns
-    /// The [`IdExtended`] bitfield associated with the message.
+    /// The [`Id<J1939>`] bitfield associated with the message.
     #[must_use]
-    pub fn id(&self) -> IdExtended {
+    pub fn id(&self) -> Id<J1939> {
         self.id
     }
 
     /// Retrieves the pdu from the message.
     ///
     /// # Returns
-    /// The [`PduName`] bitfield associated with the message.
+    /// The [`Pdu<Data>`] bitfield associated with the message.
     #[must_use]
-    pub fn pdu(&self) -> PduData {
+    pub fn pdu(&self) -> Pdu<Name> {
         self.pdu
     }
 }
 
-impl Message<Extended, Name> {
-    /// Constructs a new [`Message`] from its parts: an identifier and pdu.
-    ///
-    /// # Arguments
-    /// - `id`: An [`IdExtended`] representing the 29-bit identifier of the message.
-    /// - `pdu`: A [`PduName`] containing the payload or content of the message.
-    ///
-    /// # Returns
-    /// A new [`Message`] instance initialized with the provided parts.
-    #[must_use]
-    pub fn from_parts(id: IdExtended, pdu: PduName) -> Self {
-        Self { id, pdu }
-    }
-
-    /// Destructures the [`Message`] into its parts: an identifier and pdu.
-    ///
-    /// # Returns
-    /// A tuple containing:
-    /// - An [`IdExtended`] representing the 29-bit identifier.
-    /// - A [`PduName`] containing the payload or content of the message.
-    #[must_use]
-    pub fn into_parts(self) -> (Id<Extended>, PduName) {
-        (self.id, self.pdu)
-    }
-
-    /// Constructs a new [`Message`] from raw bit representations of its components.
-    /// # Errors
-    /// - If failed to construct the identifier field from bits
-    /// - If failed to construct the pdu field from bits
-    pub fn try_from_bits(hex_id: u32, hex_pdu: u64) -> Result<Self, anyhow::Error> {
-        let id = IdExtended::try_from_bits(hex_id)?;
-        let pdu = PduName::try_from_bits(hex_pdu)?;
-
-        Ok(Self { id, pdu })
-    }
-
-    /// Constructs a new [`Message`] from hexadecimal string representations of its components.
-    /// # Errors
-    /// - If failed to construct the identifier field from hex
-    /// - If failed to construct the pdu field from hex
-    pub fn try_from_hex(hex_id: &str, hex_pdu: &str) -> Result<Self, anyhow::Error> {
-        let id = IdExtended::try_from_hex(hex_id)?;
-        let pdu = PduName::try_from_hex(hex_pdu)?;
-
-        Ok(Self { id, pdu })
-    }
-
-    /// Constructs a new [`Message`] from raw bit representations of its components.
-    ///
-    /// # Arguments
-    /// - `hex_id`: A `u32` representing the hexadecimal encoded 29-bit identifier.
-    /// - `hex_pdu`: A `u64` representing the hexadecimal encoded pdu.
-    ///
-    /// # Returns
-    /// A new [`Message`] instance initialized with the decoded components.
-    #[must_use]
-    pub fn from_bits(hex_id: u32, hex_pdu: u64) -> Self {
-        let id = IdExtended::from_bits(hex_id);
-        let pdu = PduName::from_bits(hex_pdu);
-
-        Self { id, pdu }
-    }
-
-    /// Constructs a new [`Message`] from hexadecimal string representations of its components.
-    ///
-    /// # Arguments
-    /// - `hex_id`: A `&str` representing the hexadecimal encoded 29-bit identifier.
-    /// - `hex_pdu`: A `&str` representing the hexadecimal encoded pdu.
-    ///
-    /// # Returns
-    /// A new [`Message`] instance initialized with the decoded components.
-    #[must_use]
-    pub fn from_hex(hex_id: &str, hex_pdu: &str) -> Self {
-        let id = IdExtended::from_hex(hex_id);
-        let pdu = PduName::from_hex(hex_pdu);
-
-        Self { id, pdu }
-    }
-
-    /// Retrieves the 29-bit identifier from the message.
-    ///
-    /// # Returns
-    /// The [`IdExtended`] bitfield associated with the message.
-    #[must_use]
-    pub fn id(&self) -> IdExtended {
-        self.id
-    }
-
-    /// Retrieves the pdu from the message.
-    ///
-    /// # Returns
-    /// The [`PduName`] bitfield associated with the message.
-    #[must_use]
-    pub fn pdu(&self) -> PduName {
-        self.pdu
-    }
-}
-
-impl From<Message<Extended, Data>> for Message<Extended, Name> {
-    fn from(value: Message<Extended, Data>) -> Self {
+impl From<Message<J1939, Data>> for Message<J1939, Name> {
+    fn from(value: Message<J1939, Data>) -> Self {
         Self {
             id: value.id(),
             pdu: value.pdu().into(),
@@ -228,8 +226,8 @@ impl From<Message<Extended, Data>> for Message<Extended, Name> {
     }
 }
 
-impl From<Message<Extended, Name>> for Message<Extended, Data> {
-    fn from(value: Message<Extended, Name>) -> Self {
+impl From<Message<J1939, Name>> for Message<J1939, Data> {
+    fn from(value: Message<J1939, Name>) -> Self {
         Self {
             id: value.id(),
             pdu: value.pdu().into(),
