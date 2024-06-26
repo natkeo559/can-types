@@ -31,7 +31,7 @@ impl IsProtocol for Can2B {}
 impl Conversion<u32> for Id<Can2B> {
     type Error = anyhow::Error;
 
-    /// Creates a new 29-bit extended bitfield from a 16-bit integer.
+    /// Creates a new 29-bit extended identifier from a 16-bit integer.
     ///
     /// # Examples
     /// ```rust
@@ -41,12 +41,12 @@ impl Conversion<u32> for Id<Can2B> {
     /// assert_eq!(0b00000_11111111_00000000_11111111, id_a.into_bits());
     /// ```
     fn from_bits(bits: u32) -> Self {
-        let bitfield = Can2B(bits);
+        let id_bitfield = Can2B(bits);
 
-        Self(bitfield)
+        Self(id_bitfield)
     }
 
-    /// Creates a new 29-bit extended bitfield from a base-16 (hex) string slice.
+    /// Creates a new 29-bit extended identifier from a base-16 (hex) string slice.
     ///
     /// # Examples
     /// ```rust
@@ -57,12 +57,12 @@ impl Conversion<u32> for Id<Can2B> {
     /// ```
     fn from_hex(hex_str: &str) -> Self {
         let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
-        let bitfield = Can2B(bits);
+        let id_bitfield = Can2B(bits);
 
-        Self(bitfield)
+        Self(id_bitfield)
     }
 
-    /// Creates a new 29-bit extended bitfield from a 16-bit integer.
+    /// Creates a new 29-bit extended identifier from a 16-bit integer.
     ///
     /// # Errors
     /// - If value out of range for valid 11-bit identifiers
@@ -83,12 +83,12 @@ impl Conversion<u32> for Id<Can2B> {
                 bits
             ));
         }
-        let bitfield = Can2B(bits);
+        let id_bitfield = Can2B(bits);
 
-        Ok(Self(bitfield))
+        Ok(Self(id_bitfield))
     }
 
-    /// Creates a new 29-bit extended bitfield from a base-16 (hex) string slice.
+    /// Creates a new 29-bit extended identifier from a base-16 (hex) string slice.
     ///
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
@@ -111,12 +111,12 @@ impl Conversion<u32> for Id<Can2B> {
                 bits
             ));
         }
-        let bitfield = Can2B(bits);
+        let id_bitfield = Can2B(bits);
 
-        Ok(Self(bitfield))
+        Ok(Self(id_bitfield))
     }
 
-    /// Creates a new 16-bit integer from the 29-bit extended bitfield.
+    /// Creates a new 16-bit integer from the 29-bit extended identifier.
     ///
     /// # Examples
     /// ```rust
@@ -129,7 +129,7 @@ impl Conversion<u32> for Id<Can2B> {
         self.0.into_bits()
     }
 
-    /// Creates a new base-16 (hex) `String` from the 29-bit extended bitfield.
+    /// Creates a new base-16 (hex) `String` from the 29-bit extended identifier.
     ///
     /// # Requires
     /// - `alloc`

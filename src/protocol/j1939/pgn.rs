@@ -20,7 +20,8 @@ if_alloc! {
 use bitfield_struct::bitfield;
 
 use crate::{
-    conversion::Conversion, identifier::Id, protocol::j1939::J1939, protocol::DestinationAddr,
+    conversion::Conversion, identifier::Id, protocol::j1939::address::DestinationAddr,
+    protocol::j1939::identifier::J1939,
 };
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
@@ -289,7 +290,7 @@ mod pgn_tests {
     // };
 
     use super::*;
-    use crate::protocol::Addr;
+    use crate::protocol::j1939::address::Addr;
 
     #[test]
     fn test_pdu_assignment() -> Result<(), anyhow::Error> {

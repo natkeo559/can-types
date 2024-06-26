@@ -9,7 +9,7 @@ use crate::{
     prelude::{Id, IsProtocol},
 };
 
-use super::SourceAddr;
+use super::address::SourceAddr;
 
 /// Bitfield representation of a 29-bit J1939 CAN identifier.
 ///
@@ -121,7 +121,7 @@ impl Conversion<u32> for Id<J1939> {
     /// let id_a = Id::<J1939>::try_from_hex("00FF00FF").unwrap();
     /// let id_b = Id::<J1939>::try_from_hex("20000000");
     ///
-    /// assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.0 .0);
+    /// assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.into_bits());
     /// assert!(id_b.is_err())
     /// ```
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
@@ -151,6 +151,7 @@ impl Conversion<u32> for Id<J1939> {
     }
 
     /// Creates a new base-16 (hex) `String` from the 29-bit J1939 identifier.
+    ///
     /// # Requires
     /// - `alloc`
     ///
@@ -172,6 +173,14 @@ impl Id<J1939> {
     ///
     /// Returns a tuple containing the priority, reserved flag, data page flag,
     /// PDU format, PDU specific, and source address bits.
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use can_types::prelude::{Id, J1939, Conversion};
+    /// let id_a = Id::<J1939>::from_hex("00FF00FF");
+    ///
+    /// let (p, r, dp, pf, ps, sa) = id_a.into_raw_parts();
+    /// ```
     #[must_use]
     pub const fn into_raw_parts(self) -> (u8, bool, bool, u8, u8, u8) {
         let p = self.0.priority_bits();
@@ -187,15 +196,25 @@ impl Id<J1939> {
     /// Constructs a 29-bit J1939 identifier from its raw parts.
     ///
     /// # Arguments
-    /// - `priority`: Priority bits as `u8`.
-    /// - `reserved`: Reserved flag as `bool`.
-    /// - `data_page`: Data page flag as `bool`.
-    /// - `pdu_format`: PDU format bits as `u8`.
-    /// - `pdu_specific`: PDU specific bits as `u8`.
-    /// - `source_addr`: Source address bits as `u8`.
+    /// - `priority`: `u8`.
+    /// - `reserved`: `bool`.
+    /// - `data_page`: `bool`.
+    /// - `pdu_format`: `u8`.
+    /// - `pdu_specific`: `u8`.
+    /// - `source_addr`: `u8`.
     ///
     /// # Errors
     /// - If priority value is invalid
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use can_types::prelude::{Id, J1939, Conversion};
+    /// let expected_id = Id::<J1939>::from_hex("00FF00FF");
+    ///
+    /// let id_a = Id::<J1939>::from_raw_parts(0x0, false, false, 0xFF, 0x00, 0xFF);
+    ///
+    /// assert_eq!(expected_id, id_a.unwrap());
+    /// ```
     pub fn from_raw_parts(
         priority: u8,
         reserved: bool,
