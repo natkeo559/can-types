@@ -13,13 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::{
+    payload::{Data, Name, Pdu},
+    protocol::{can2_a::identifier::IdCan2A, can2_b::identifier::IdCan2B},
+};
+
 if_alloc! {
     use crate::alloc::string::String;
 }
-
-use crate::identifier::Id;
-use crate::prelude::{Data, Name, Pdu};
-use crate::protocol::{Can2A, Can2B};
 
 /// A trait for types that can be converted to and from bitfield representations (`bits`)
 /// of integers and hexadecimal string slices (hex).
@@ -70,16 +71,14 @@ impl From<Pdu<Name>> for Pdu<Data> {
     }
 }
 
-impl From<Id<Can2A>> for Id<Can2B> {
-    fn from(value: Id<Can2A>) -> Self {
+impl From<IdCan2A> for IdCan2B {
+    fn from(value: IdCan2A) -> Self {
         Self::from_bits(value.into_bits().into())
     }
 }
 
 #[cfg(test)]
 mod impl_tests {
-    use crate::prelude::{Data, Name, Pdu};
-
     use super::*;
 
     #[test]
@@ -100,9 +99,9 @@ mod impl_tests {
 
     #[test]
     fn test_extended_from() {
-        let id_std_a = Id::<Can2A>::from_hex("00F");
-        let id_ext_a = Id::<Can2B>::from(id_std_a);
+        let id_std_a = IdCan2A::from_hex("00F");
+        let id_ext_a = IdCan2B::from(id_std_a);
 
-        assert_eq!(Id::<Can2B>::from_hex("0000000F"), id_ext_a);
+        assert_eq!(IdCan2B::from_hex("0000000F"), id_ext_a);
     }
 }

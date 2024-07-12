@@ -6,7 +6,7 @@ use bitfield_struct::bitfield;
 
 use crate::{
     conversion::Conversion,
-    prelude::{Id, IsProtocol},
+    identifier::{Id, IsProtocol},
 };
 
 use super::address::SourceAddr;
@@ -45,16 +45,18 @@ pub struct J1939 {
 
 impl IsProtocol for J1939 {}
 
-impl Conversion<u32> for Id<J1939> {
+pub type IdJ1939 = Id<J1939>;
+
+impl Conversion<u32> for IdJ1939 {
     type Error = anyhow::Error;
 
     /// Creates a new 29-bit J1939 identifier from a 32-bit integer.
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::from_bits(0);
-    /// let id_b = Id::<J1939>::from_bits(4294967295);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::from_bits(0);
+    /// let id_b = IdJ1939::from_bits(4294967295);
     ///
     /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
     /// assert_eq!(0b111_111_1_1_11111111_11111111_11111111, id_b.into_bits());
@@ -68,10 +70,10 @@ impl Conversion<u32> for Id<J1939> {
     /// Creates a new 29-bit J1939 identifier from a base-16 (hex) string slice.
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
+    /// # use can_types::prelude::*;
     /// let hex_str = "0CF00400";
     ///
-    /// let id_a = Id::<J1939>::from_hex(hex_str);
+    /// let id_a = IdJ1939::from_hex(hex_str);
     ///
     /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
     /// assert_eq!(217056256, id_a.into_bits());
@@ -90,9 +92,9 @@ impl Conversion<u32> for Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::try_from_bits(0);
-    /// let id_b = Id::<J1939>::try_from_bits(4294967295);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::try_from_bits(0);
+    /// let id_b = IdJ1939::try_from_bits(4294967295);
     ///
     /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.unwrap().into_bits());
     /// assert!(id_b.is_err());
@@ -117,9 +119,9 @@ impl Conversion<u32> for Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::try_from_hex("00FF00FF").unwrap();
-    /// let id_b = Id::<J1939>::try_from_hex("20000000");
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::try_from_hex("00FF00FF").unwrap();
+    /// let id_b = IdJ1939::try_from_hex("20000000");
     ///
     /// assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.into_bits());
     /// assert!(id_b.is_err())
@@ -141,8 +143,8 @@ impl Conversion<u32> for Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::from_bits(0);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::from_bits(0);
     ///
     /// assert_eq!(0, id_a.into_bits());
     /// ```
@@ -157,8 +159,8 @@ impl Conversion<u32> for Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::from_bits(15);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::from_bits(15);
     ///
     /// assert_eq!("0000000F", id_a.into_hex());
     /// ```
@@ -168,7 +170,7 @@ impl Conversion<u32> for Id<J1939> {
     }
 }
 
-impl Id<J1939> {
+impl IdJ1939 {
     /// Decomposes the 29-bit J1939 identifier into its raw parts.
     ///
     /// Returns a tuple containing the priority, reserved flag, data page flag,
@@ -176,8 +178,8 @@ impl Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let id_a = Id::<J1939>::from_hex("00FF00FF");
+    /// # use can_types::prelude::*;
+    /// let id_a = IdJ1939::from_hex("00FF00FF");
     ///
     /// let (p, r, dp, pf, ps, sa) = id_a.into_raw_parts();
     /// ```
@@ -208,10 +210,10 @@ impl Id<J1939> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, J1939, Conversion};
-    /// let expected_id = Id::<J1939>::from_hex("00FF00FF");
+    /// # use can_types::prelude::*;
+    /// let expected_id = IdJ1939::from_hex("00FF00FF");
     ///
-    /// let id_a = Id::<J1939>::from_raw_parts(0x0, false, false, 0xFF, 0x00, 0xFF);
+    /// let id_a = IdJ1939::from_raw_parts(0x0, false, false, 0xFF, 0x00, 0xFF);
     ///
     /// assert_eq!(expected_id, id_a.unwrap());
     /// ```
@@ -282,28 +284,27 @@ impl Id<J1939> {
 
 #[cfg(test)]
 mod j1939_tests {
-    use crate::prelude::{Conversion, Id};
 
-    use super::J1939;
+    use super::*;
 
     #[test]
     fn test_from_bits() {
-        let id_a = Id::<J1939>::from_bits(16711935);
+        let id_a = IdJ1939::from_bits(16711935);
 
         assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.0 .0)
     }
 
     #[test]
     fn test_from_hex() {
-        let id_a = Id::<J1939>::from_hex("00FF00FF");
+        let id_a = IdJ1939::from_hex("00FF00FF");
 
         assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.0 .0)
     }
 
     #[test]
     fn test_try_from_bits() {
-        let id_a = Id::<J1939>::try_from_bits(16711935).unwrap();
-        let id_b = Id::<J1939>::try_from_bits(536870912);
+        let id_a = IdJ1939::try_from_bits(16711935).unwrap();
+        let id_b = IdJ1939::try_from_bits(536870912);
 
         assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.0 .0);
         assert!(id_b.is_err())
@@ -311,8 +312,8 @@ mod j1939_tests {
 
     #[test]
     fn test_try_from_hex() {
-        let id_a = Id::<J1939>::try_from_hex("00FF00FF").unwrap();
-        let id_b = Id::<J1939>::try_from_hex("20000000");
+        let id_a = IdJ1939::try_from_hex("00FF00FF").unwrap();
+        let id_b = IdJ1939::try_from_hex("20000000");
 
         assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.0 .0);
         assert!(id_b.is_err())
@@ -320,7 +321,7 @@ mod j1939_tests {
 
     #[test]
     fn test_into_bits() {
-        let id_a = Id::<J1939>::from_bits(16711935);
+        let id_a = IdJ1939::from_bits(16711935);
 
         assert_eq!(16711935, id_a.into_bits())
     }
@@ -328,7 +329,7 @@ mod j1939_tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_into_hex() {
-        let id_a = Id::<J1939>::from_bits(16711935);
+        let id_a = IdJ1939::from_bits(16711935);
 
         assert_eq!("00FF00FF", id_a.into_hex())
     }
