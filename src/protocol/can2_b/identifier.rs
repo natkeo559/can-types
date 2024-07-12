@@ -6,7 +6,7 @@ use bitfield_struct::bitfield;
 
 use crate::{
     conversion::Conversion,
-    prelude::{Id, IsProtocol},
+    identifier::{Id, IsProtocol},
 };
 
 /// Bitfield representation of an extended 29-bit CAN identifier.
@@ -28,15 +28,17 @@ pub struct Can2B {
 
 impl IsProtocol for Can2B {}
 
-impl Conversion<u32> for Id<Can2B> {
+pub type IdCan2B = Id<Can2B>;
+
+impl Conversion<u32> for IdCan2B {
     type Error = anyhow::Error;
 
     /// Creates a new 29-bit extended identifier from a 16-bit integer.
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::from_bits(16711935);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::from_bits(16711935);
     ///
     /// assert_eq!(0b00000_11111111_00000000_11111111, id_a.into_bits());
     /// ```
@@ -50,8 +52,8 @@ impl Conversion<u32> for Id<Can2B> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::from_hex("00FF00FF");
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::from_hex("00FF00FF");
     ///
     /// assert_eq!(0b00000_11111111_00000000_11111111, id_a.into_bits());
     /// ```
@@ -69,9 +71,9 @@ impl Conversion<u32> for Id<Can2B> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::try_from_bits(16711935).unwrap();
-    /// let id_b = Id::<Can2B>::try_from_bits(536870912);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::try_from_bits(16711935).unwrap();
+    /// let id_b = IdCan2B::try_from_bits(536870912);
     ///
     /// assert_eq!(0b00000_11111111_00000000_11111111, id_a.into_bits());
     /// assert!(id_b.is_err());
@@ -96,9 +98,9 @@ impl Conversion<u32> for Id<Can2B> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::try_from_hex("00FF00FF").unwrap();
-    /// let id_b = Id::<Can2B>::try_from_hex("20000000");
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::try_from_hex("00FF00FF").unwrap();
+    /// let id_b = IdCan2B::try_from_hex("20000000");
     ///
     /// assert_eq!(0b00000_11111111_00000000_11111111, id_a.into_bits());
     /// assert!(id_b.is_err());
@@ -120,8 +122,8 @@ impl Conversion<u32> for Id<Can2B> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::from_bits(16711935);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::from_bits(16711935);
     ///
     /// assert_eq!(16711935, id_a.into_bits());
     /// ```
@@ -136,8 +138,8 @@ impl Conversion<u32> for Id<Can2B> {
     ///
     /// # Examples
     /// ```rust
-    /// # use can_types::prelude::{Id, Can2B, Conversion};
-    /// let id_a = Id::<Can2B>::from_bits(16711935);
+    /// # use can_types::prelude::*;
+    /// let id_a = IdCan2B::from_bits(16711935);
     ///
     /// assert_eq!("00FF00FF", id_a.into_hex());
     /// ```
@@ -149,28 +151,27 @@ impl Conversion<u32> for Id<Can2B> {
 
 #[cfg(test)]
 mod can2b_tests {
-    use crate::prelude::{Conversion, Id};
 
-    use super::Can2B;
+    use super::*;
 
     #[test]
     fn test_from_bits() {
-        let id_a = Id::<Can2B>::from_bits(16711935);
+        let id_a = IdCan2B::from_bits(16711935);
 
         assert_eq!(0b00000_11111111_00000000_11111111, id_a.0 .0)
     }
 
     #[test]
     fn test_from_hex() {
-        let id_a = Id::<Can2B>::from_hex("00FF00FF");
+        let id_a = IdCan2B::from_hex("00FF00FF");
 
         assert_eq!(0b00000_11111111_00000000_11111111, id_a.0 .0)
     }
 
     #[test]
     fn test_try_from_bits() {
-        let id_a = Id::<Can2B>::try_from_bits(16711935).unwrap();
-        let id_b = Id::<Can2B>::try_from_bits(536870912);
+        let id_a = IdCan2B::try_from_bits(16711935).unwrap();
+        let id_b = IdCan2B::try_from_bits(536870912);
 
         assert_eq!(0b00000_11111111_00000000_11111111, id_a.0 .0);
         assert!(id_b.is_err())
@@ -178,8 +179,8 @@ mod can2b_tests {
 
     #[test]
     fn test_try_from_hex() {
-        let id_a = Id::<Can2B>::try_from_hex("00FF00FF").unwrap();
-        let id_b = Id::<Can2B>::try_from_hex("20000000");
+        let id_a = IdCan2B::try_from_hex("00FF00FF").unwrap();
+        let id_b = IdCan2B::try_from_hex("20000000");
 
         assert_eq!(0b00000_11111111_00000000_11111111, id_a.0 .0);
         assert!(id_b.is_err())
@@ -187,7 +188,7 @@ mod can2b_tests {
 
     #[test]
     fn test_into_bits() {
-        let id_a = Id::<Can2B>::from_bits(16711935);
+        let id_a = IdCan2B::from_bits(16711935);
 
         assert_eq!(16711935, id_a.into_bits())
     }
@@ -195,7 +196,7 @@ mod can2b_tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_into_hex() {
-        let id_a = Id::<Can2B>::from_bits(16711935);
+        let id_a = IdCan2B::from_bits(16711935);
 
         assert_eq!("00FF00FF", id_a.into_hex())
     }

@@ -1,7 +1,3 @@
-mod can2_a;
-mod can2_b;
-mod j1939;
-
-pub use can2_a::*;
-pub use can2_b::*;
-pub use j1939::*;
+pub mod can2_a;
+pub mod can2_b;
+pub mod j1939;

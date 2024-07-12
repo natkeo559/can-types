@@ -23,7 +23,7 @@
 //! ```rust
 //! # use can_types::prelude::*;
 //! # fn main() -> Result<(), anyhow::Error> {
-//! let id_a = Id::<J1939>::try_from_hex("0CF00400")?;
+//! let id_a = IdJ1939::try_from_hex("0CF00400")?;
 //!
 //! assert_eq!(3, id_a.priority());
 //! assert_eq!(SourceAddr::Some(0), id_a.source_address());
@@ -36,12 +36,12 @@
 //! ```rust
 //! # use can_types::prelude::*;
 //! # fn main() -> Result<(), anyhow::Error> {
-//! let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+//! let id_a = IdJ1939::try_from_hex("18FEF200")?;
 //!
 //! assert_eq!(CommunicationMode::Broadcast, id_a.pgn().communication_mode());
 //! assert_eq!(GroupExtension::Some(242), id_a.pgn().group_extension());
 //!  
-//! let id_b = Id::<J1939>::try_from_hex("0C00290B")?;
+//! let id_b = IdJ1939::try_from_hex("0C00290B")?;
 //!         
 //! // SA 11 = Brakes
 //! assert_eq!(SourceAddr::Some(11), id_b.source_address());
@@ -76,10 +76,21 @@ pub mod message;
 pub mod payload;
 pub mod protocol;
 
+#[doc(hidden)]
 pub mod prelude {
-    pub use crate::conversion::*;
-    pub use crate::identifier::*;
-    pub use crate::message::*;
-    pub use crate::payload::*;
-    pub use crate::protocol::*;
+    use super::{conversion, identifier, message, payload, protocol};
+
+    pub use conversion::Conversion;
+    pub use identifier::{Id, IsProtocol};
+    pub use message::Message;
+    pub use payload::{Data, IsDataUnit, Name, Pdu};
+    pub use protocol::{
+        can2_a::identifier::{Can2A, IdCan2A},
+        can2_b::identifier::{Can2B, IdCan2B},
+        j1939::{
+            address::{Addr, DestinationAddr, SourceAddr},
+            identifier::{IdJ1939, J1939},
+            pgn::{CommunicationMode, GroupExtension, PduAssignment, PduFormat, Pgn},
+        },
+    };
 }

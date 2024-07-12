@@ -13,7 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::prelude::{Conversion, Data, Id, IsDataUnit, IsProtocol, Name, Pdu, J1939};
+use crate::{
+    conversion::Conversion,
+    identifier::{Id, IsProtocol},
+    payload::{Data, IsDataUnit, Name, Pdu},
+    protocol::j1939::identifier::J1939,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Message<P: IsProtocol, U: IsDataUnit> {

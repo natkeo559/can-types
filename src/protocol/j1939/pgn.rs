@@ -19,10 +19,9 @@ if_alloc! {
 
 use bitfield_struct::bitfield;
 
-use crate::{
-    conversion::Conversion, identifier::Id, protocol::j1939::address::DestinationAddr,
-    protocol::j1939::identifier::J1939,
-};
+use crate::{conversion::Conversion, identifier::Id, protocol::j1939::identifier::J1939};
+
+use super::address::DestinationAddr;
 
 /// Represents the assignment type of a Protocol Data Unit (PDU).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
