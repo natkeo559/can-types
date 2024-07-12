@@ -15,7 +15,7 @@ See `Conversion` for more details.
 # Examples
 ## Hex to J1939 Identifier
 ```rust
-let id_a = Id::<J1939>::try_from_hex("0CF00400")?;
+let id_a = IdJ1939::try_from_hex("0CF00400")?;
 
 assert_eq!(3, id_a.priority());
 assert_eq!(SourceAddr::Some(0), id_a.source_address());
@@ -23,12 +23,12 @@ assert_eq!(Some(Addr::PrimaryEngineController), id_a.source_address().lookup());
 ```
 ## Decode J1939 PGN
 ```rust
-let id_a = Id::<J1939>::try_from_hex("18FEF200")?;
+let id_a = IdJ1939::try_from_hex("18FEF200")?;
 
 assert_eq!(CommunicationMode::Broadcast, id_a.pgn().communication_mode());
 assert_eq!(GroupExtension::Some(242), id_a.pgn().group_extension());
  
-let id_b = Id::<J1939>::try_from_hex("0C00290B")?;
+let id_b = IdJ1939::try_from_hex("0C00290B")?;
         
 // SA 11 = Brakes
 assert_eq!(SourceAddr::Some(11), id_b.source_address());
