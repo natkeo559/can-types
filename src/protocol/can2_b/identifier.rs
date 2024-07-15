@@ -30,6 +30,14 @@ impl IsProtocol for Can2B {}
 
 pub type IdCan2B = Id<Can2B>;
 
+impl IdCan2B {
+    /// Returns the value of the identifier, which is truncated to 29-bits. 
+    #[must_use]
+    pub const fn id(self) -> u32 {
+        self.0.id_bits()
+    }
+}
+
 impl Conversion<u32> for IdCan2B {
     type Error = anyhow::Error;
 
@@ -153,6 +161,13 @@ impl Conversion<u32> for IdCan2B {
 mod can2b_tests {
 
     use super::*;
+
+    #[test]
+    fn test_identifier_value() {
+        let id_a = IdCan2B::from_bits(u32::MAX);
+        
+        assert_eq!(0x1FFFFFFF, id_a.id())
+    }
 
     #[test]
     fn test_from_bits() {
