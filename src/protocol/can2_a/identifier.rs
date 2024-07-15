@@ -17,7 +17,8 @@ use crate::{
 /// |------------------------|-------------|
 /// | Padding bits (private) | 5           |
 /// | Identifier bits        | 11          |
-#[bitfield(u16, order = Msb)]
+#[cfg_attr(not(feature = "endian-num"), bitfield(u16, order = Msb))]
+#[cfg_attr(feature = "endian-num", bitfield(u16, order = Msb, repr = le16, from = le16::from_ne, into = le16::to_ne))]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Can2A {
     #[bits(5)]

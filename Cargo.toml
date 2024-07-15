@@ -18,9 +18,11 @@ license = "GPL-3.0"
 [dependencies]
 anyhow = {version = "1.0.83", default-features = false}
 bitfield-struct = {version = "0.8.0", default-features = false}
+endian-num = {version = "0.1.1", default-features = false, features = ["linux-types"], optional = true}
 
 [features]
 default = ["alloc"]
+endian-num = ["dep:endian-num"]
 alloc = []
 
 [dev-dependencies]
