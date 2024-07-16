@@ -17,11 +17,11 @@ use crate::{
 /// |------------------------|-------------|
 /// | Padding bits (private) | 5           |
 /// | Identifier bits        | 11          |
-#[bitfield(u16, order = Msb)]
+#[bitfield(u16, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Can2A {
     #[bits(5)]
-    _padding_bits: u8,
+    __: u8,
     #[bits(11)]
     id_bits: u16,
 }
@@ -31,7 +31,8 @@ impl IsProtocol for Can2A {}
 pub type IdCan2A = Id<Can2A>;
 
 impl IdCan2A {
-    /// Returns the value of the identifier, which is truncated to 11-bits. 
+    /// Returns the value of the identifier, which is truncated to 11-bits.
+    #[inline]
     #[must_use]
     pub const fn id(self) -> u16 {
         self.0.id_bits()
@@ -50,6 +51,7 @@ impl Conversion<u16> for IdCan2A {
     ///
     /// assert_eq!(0b000_0000_1111, id_a.into_bits());
     /// ```
+    #[inline]
     fn from_bits(bits: u16) -> Self {
         let id_bitfield = Can2A(bits);
 
@@ -65,6 +67,7 @@ impl Conversion<u16> for IdCan2A {
     ///
     /// assert_eq!(0b000_0000_1111, id_a.into_bits());
     /// ```
+    #[inline]
     fn from_hex(hex_str: &str) -> Self {
         let bits = u16::from_str_radix(hex_str, 16).unwrap_or_default();
         let id_bitfield = Can2A(bits);
@@ -85,6 +88,7 @@ impl Conversion<u16> for IdCan2A {
     /// assert_eq!(0b000_0000_1111, id_a.into_bits());
     /// assert!(id_b.is_err());
     /// ```
+    #[inline]
     fn try_from_bits(bits: u16) -> Result<Self, Self::Error> {
         if bits > 0x7FF {
             return Err(anyhow::anyhow!(
@@ -111,6 +115,7 @@ impl Conversion<u16> for IdCan2A {
     /// assert_eq!(0b000_0000_1111, id_a.into_bits());
     /// assert!(id_b.is_err());
     /// ```
+    #[inline]
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
         let bits = u16::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x7FF {
@@ -134,8 +139,9 @@ impl Conversion<u16> for IdCan2A {
     /// assert_eq!(0b000_0000_1111, id_a.into_bits());
     /// assert_eq!(0x00F, id_a.into_bits());
     /// ```
+    #[inline]
     fn into_bits(self) -> u16 {
-        self.0.into_bits()
+        self.0 .0
     }
 
     /// Creates a new base-16 (hex) `String` from the 11-bit standard identifier.
@@ -150,9 +156,10 @@ impl Conversion<u16> for IdCan2A {
     ///
     /// assert_eq!("00F", id_a.into_hex());
     /// ```
+    #[inline]
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        format(format_args!("{:03X}", self.0.into_bits()))
+        format(format_args!("{:03X}", self.0 .0))
     }
 }
 
@@ -164,7 +171,7 @@ mod can2a_tests {
     #[test]
     fn test_identifier_value() {
         let id_a = IdCan2A::from_bits(u16::MAX);
-        
+
         assert_eq!(0x7FF, id_a.id())
     }
 

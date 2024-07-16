@@ -35,6 +35,7 @@ impl Message<J1939, Data> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the provided parts.
+    #[inline]
     #[must_use]
     pub fn from_parts(id: Id<J1939>, pdu: Pdu<Data>) -> Self {
         Self { id, pdu }
@@ -46,6 +47,7 @@ impl Message<J1939, Data> {
     /// A tuple containing:
     /// - An [`Id<J1939>`] representing the 29-bit identifier.
     /// - A [`Pdu<Data>`] containing the payload or content of the message.
+    #[inline]
     #[must_use]
     pub fn into_parts(self) -> (Id<J1939>, Pdu<Data>) {
         (self.id, self.pdu)
@@ -55,6 +57,7 @@ impl Message<J1939, Data> {
     /// # Errors
     /// - If failed to construct the identifier field from bits
     /// - If failed to construct the pdu field from bits
+    #[inline]
     pub fn try_from_bits(hex_id: u32, hex_pdu: u64) -> Result<Self, anyhow::Error> {
         let id = Id::<J1939>::from_bits(hex_id);
         let pdu = Pdu::<Data>::try_from_bits(hex_pdu)?;
@@ -66,6 +69,7 @@ impl Message<J1939, Data> {
     /// # Errors
     /// - If failed to construct the identifier field from hex
     /// - If failed to construct the pdu field from hex
+    #[inline]
     pub fn try_from_hex(hex_id: &str, hex_pdu: &str) -> Result<Self, anyhow::Error> {
         let id = Id::<J1939>::try_from_hex(hex_id)?;
         let pdu = Pdu::<Data>::try_from_hex(hex_pdu)?;
@@ -81,6 +85,7 @@ impl Message<J1939, Data> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the decoded components.
+    #[inline]
     #[must_use]
     pub fn from_bits(hex_id: u32, hex_pdu: u64) -> Self {
         let id = Id::<J1939>::from_bits(hex_id);
@@ -97,6 +102,7 @@ impl Message<J1939, Data> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the decoded components.
+    #[inline]
     #[must_use]
     pub fn from_hex(hex_id: &str, hex_pdu: &str) -> Self {
         let id = Id::<J1939>::from_hex(hex_id);
@@ -109,6 +115,7 @@ impl Message<J1939, Data> {
     ///
     /// # Returns
     /// The [`Id<J1939>`] bitfield associated with the message.
+    #[inline]
     #[must_use]
     pub fn id(&self) -> Id<J1939> {
         self.id
@@ -118,6 +125,7 @@ impl Message<J1939, Data> {
     ///
     /// # Returns
     /// The [`Pdu<Data>`] bitfield associated with the message.
+    #[inline]
     #[must_use]
     pub fn pdu(&self) -> Pdu<Data> {
         self.pdu
@@ -133,6 +141,7 @@ impl Message<J1939, Name> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the provided parts.
+    #[inline]
     #[must_use]
     pub fn from_parts(id: Id<J1939>, pdu: Pdu<Name>) -> Self {
         Self { id, pdu }
@@ -144,6 +153,7 @@ impl Message<J1939, Name> {
     /// A tuple containing:
     /// - An [`Id<J1939>`] representing the 29-bit identifier.
     /// - A [`Pdu<Data>`] containing the payload or content of the message.
+    #[inline]
     #[must_use]
     pub fn into_parts(self) -> (Id<J1939>, Pdu<Name>) {
         (self.id, self.pdu)
@@ -153,6 +163,7 @@ impl Message<J1939, Name> {
     /// # Errors
     /// - If failed to construct the identifier field from bits
     /// - If failed to construct the pdu field from bits
+    #[inline]
     pub fn try_from_bits(hex_id: u32, hex_pdu: u64) -> Result<Self, anyhow::Error> {
         let id = Id::<J1939>::try_from_bits(hex_id)?;
         let pdu = Pdu::<Name>::try_from_bits(hex_pdu)?;
@@ -164,6 +175,7 @@ impl Message<J1939, Name> {
     /// # Errors
     /// - If failed to construct the identifier field from hex
     /// - If failed to construct the pdu field from hex
+    #[inline]
     pub fn try_from_hex(hex_id: &str, hex_pdu: &str) -> Result<Self, anyhow::Error> {
         let id = Id::<J1939>::try_from_hex(hex_id)?;
         let pdu = Pdu::<Name>::try_from_hex(hex_pdu)?;
@@ -179,6 +191,7 @@ impl Message<J1939, Name> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the decoded components.
+    #[inline]
     #[must_use]
     pub fn from_bits(hex_id: u32, hex_pdu: u64) -> Self {
         let id = Id::<J1939>::from_bits(hex_id);
@@ -195,6 +208,7 @@ impl Message<J1939, Name> {
     ///
     /// # Returns
     /// A new [`Message`] instance initialized with the decoded components.
+    #[inline]
     #[must_use]
     pub fn from_hex(hex_id: &str, hex_pdu: &str) -> Self {
         let id = Id::<J1939>::from_hex(hex_id);
@@ -207,6 +221,7 @@ impl Message<J1939, Name> {
     ///
     /// # Returns
     /// The [`Id<J1939>`] bitfield associated with the message.
+    #[inline]
     #[must_use]
     pub fn id(&self) -> Id<J1939> {
         self.id
@@ -216,6 +231,7 @@ impl Message<J1939, Name> {
     ///
     /// # Returns
     /// The [`Pdu<Data>`] bitfield associated with the message.
+    #[inline]
     #[must_use]
     pub fn pdu(&self) -> Pdu<Name> {
         self.pdu
