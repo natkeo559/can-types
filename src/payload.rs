@@ -37,7 +37,7 @@ pub trait IsDataUnit {}
 /// | byte 5           | 8           |
 /// | byte 6           | 8           |
 /// | byte 7           | 8           |
-#[bitfield(u64, order = Msb)]
+#[bitfield(u64, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Data {
     #[bits(8)]
@@ -76,7 +76,7 @@ pub struct Data {
 /// | ECU instance bits                 | 3           |
 /// | Manufacturer code bits            | 11          |
 /// | Identity number bits              | 21          |
-#[bitfield(u64, order = Msb)]
+#[bitfield(u64, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Name {
     #[bits(1)]
@@ -141,7 +141,7 @@ impl Conversion<u64> for Pdu<Data> {
 
     /// Creates a new 64-bit integer from the [`Data`] bitfield.
     fn into_bits(self) -> u64 {
-        self.0.into_bits()
+        self.0 .0
     }
 
     /// Creates a new base-16 (hex) [`String`] from the [`Data`] bitfield.
@@ -149,7 +149,7 @@ impl Conversion<u64> for Pdu<Data> {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        format(format_args!("{:016X}", self.0.into_bits()))
+        format(format_args!("{:016X}", self.0 .0))
     }
 }
 
@@ -205,31 +205,31 @@ impl Pdu<Data> {
     /// Return the 64-bit [`Data`] bitfield as little-endian bytes.
     #[must_use]
     pub const fn to_le_bytes(&self) -> [u8; 8] {
-        self.0.into_bits().to_le_bytes()
+        self.0 .0.to_le_bytes()
     }
 
     /// Return the 64-bit [`Data`] bitfield as big-endian bytes.
     #[must_use]
     pub const fn to_be_bytes(&self) -> [u8; 8] {
-        self.0.into_bits().to_be_bytes()
+        self.0 .0.to_be_bytes()
     }
 
     /// Return the 64-bit [`Data`] bitfield as native-endian bytes.
     #[must_use]
     pub const fn to_ne_bytes(&self) -> [u8; 8] {
-        self.0.into_bits().to_ne_bytes()
+        self.0 .0.to_ne_bytes()
     }
 
     /// Convert the [`Data`] bitfield to little-endian byte format.
     #[must_use]
     pub const fn to_le(&self) -> Self {
-        Self(Data(self.0.into_bits().to_le()))
+        Self(Data(self.0 .0.to_le()))
     }
 
     /// Convert the [`Data`] bitfield to big-endian byte format.
     #[must_use]
     pub const fn to_be(&self) -> Self {
-        Self(Data(self.0.into_bits().to_be()))
+        Self(Data(self.0 .0.to_be()))
     }
 }
 
@@ -267,7 +267,7 @@ impl Conversion<u64> for Pdu<Name> {
 
     /// Creates a new 64-bit integer from the [`Name`] bitfield.
     fn into_bits(self) -> u64 {
-        self.0.into_bits()
+        self.0 .0
     }
 
     /// Creates a new base-16 (hex) [`String`] from the [`Name`] bitfield.
@@ -275,7 +275,7 @@ impl Conversion<u64> for Pdu<Name> {
     /// - `alloc`
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
-        format(format_args!("{:016X}", self.0.into_bits()))
+        format(format_args!("{:016X}", self.0 .0))
     }
 }
 
@@ -382,8 +382,10 @@ mod data_tests {
             .with_manufacturer_code_bits(0x122)
             .with_identity_number_bits(0xB0309);
 
+        let pdu_name = Pdu::<Name>(name_a);
+
         let bytes_a: [u8; 8] = [0x09, 0x03, 0x4B, 0x24, 0x11, 0x05, 0x0C, 0x85];
-        let name_a_bytes = name_a.into_bits().to_le_bytes();
+        let name_a_bytes = pdu_name.into_bits().to_le_bytes();
 
         assert_eq!(bytes_a, name_a_bytes);
     }

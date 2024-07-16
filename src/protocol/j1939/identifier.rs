@@ -28,7 +28,7 @@ use super::address::SourceAddr;
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct J1939 {
     #[bits(3)]
-    _padding_bits: u8,
+    __: u8,
     #[bits(3)]
     priority_bits: u8,
     #[bits(1)]
@@ -61,6 +61,7 @@ impl Conversion<u32> for IdJ1939 {
     /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.into_bits());
     /// assert_eq!(0b111_111_1_1_11111111_11111111_11111111, id_b.into_bits());
     /// ```
+    #[inline]
     fn from_bits(bits: u32) -> Self {
         let bitfield = J1939(bits);
 
@@ -78,6 +79,7 @@ impl Conversion<u32> for IdJ1939 {
     /// assert_eq!(0b000_011_0_0_11110000_00000100_00000000, id_a.into_bits());
     /// assert_eq!(217056256, id_a.into_bits());
     /// ```
+    #[inline]
     fn from_hex(hex_str: &str) -> Self {
         let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
         let bitfield = J1939(bits);
@@ -99,6 +101,7 @@ impl Conversion<u32> for IdJ1939 {
     /// assert_eq!(0b000_000_0_0_00000000_00000000_00000000, id_a.unwrap().into_bits());
     /// assert!(id_b.is_err());
     /// ```
+    #[inline]
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         if bits > 0x1FFF_FFFF {
             return Err(anyhow::anyhow!(
@@ -126,6 +129,7 @@ impl Conversion<u32> for IdJ1939 {
     /// assert_eq!(0b000_0_0_11111111_00000000_11111111, id_a.into_bits());
     /// assert!(id_b.is_err())
     /// ```
+    #[inline]
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
         let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x1FFF_FFFF {
@@ -148,6 +152,7 @@ impl Conversion<u32> for IdJ1939 {
     ///
     /// assert_eq!(0, id_a.into_bits());
     /// ```
+    #[inline]
     fn into_bits(self) -> u32 {
         self.0.into_bits()
     }
@@ -164,6 +169,7 @@ impl Conversion<u32> for IdJ1939 {
     ///
     /// assert_eq!("0000000F", id_a.into_hex());
     /// ```
+    #[inline]
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:08X}", self.0.into_bits()))
@@ -246,36 +252,42 @@ impl IdJ1939 {
     /// Returns the priority bits indicating the priority level.
     ///
     /// 0 = highest priority
+    #[inline]
     #[must_use]
     pub const fn priority(&self) -> u8 {
         self.0.priority_bits()
     }
 
     /// Returns the reserved flag - 0 or 1
+    #[inline]
     #[must_use]
     pub const fn reserved(&self) -> bool {
         self.0.reserved_bits()
     }
 
     /// Returns the data page flag - 0 or 1
+    #[inline]
     #[must_use]
     pub const fn data_page(&self) -> bool {
         self.0.data_page_bits()
     }
 
     /// Returns the PDU format bits specifying the Protocol Data Unit format.
+    #[inline]
     #[must_use]
     pub const fn pdu_format(&self) -> u8 {
         self.0.pdu_format_bits()
     }
 
     /// Returns the PDU specific bits providing additional details about the PDU.
+    #[inline]
     #[must_use]
     pub const fn pdu_specific(&self) -> u8 {
         self.0.pdu_specific_bits()
     }
 
     /// Returns the source address bits identifying the source of the data.
+    #[inline]
     #[must_use]
     pub fn source_address(&self) -> SourceAddr {
         SourceAddr::Some(self.0.source_address_bits())

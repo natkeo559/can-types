@@ -32,7 +32,6 @@ pub enum PduAssignment {
     /// Manufacturer/proprietary assigned PDU.  
     /// Contains the PDU value.
     Manufacturer(u32),
-
     /// Unknown or unrecognized PDU assignment.
     /// Contains the PDU value.
     Unknown(u32),
@@ -79,11 +78,11 @@ pub enum GroupExtension {
 /// | Data page bits         | 1           |
 /// | PDU format bits        | 8           |
 /// | PDU specific bits      | 8           |
-#[bitfield(u32, order = Msb)]
+#[bitfield(u32, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq)]
 pub struct Pgn {
     #[bits(14)]
-    _padding_bits: u16,
+    __: u16,
     #[bits(1)]
     reserved_bits: bool,
     #[bits(1)]
@@ -98,11 +97,13 @@ impl Conversion<u32> for Pgn {
     type Error = anyhow::Error;
 
     /// Creates a new [`Pgn`] bitfield from a 32-bit integer.
+    #[inline]
     fn from_bits(bits: u32) -> Self {
         Self(bits)
     }
 
     /// Creates a new [`Pgn`] bitfield from a base-16 (hex) string slice.
+    #[inline]
     fn from_hex(hex_str: &str) -> Self {
         let bits = u32::from_str_radix(hex_str, 16).unwrap_or_default();
 
@@ -112,6 +113,7 @@ impl Conversion<u32> for Pgn {
     /// Creates a new [`Pgn`] bitfield from a 32-bit integer.
     /// # Errors
     /// - Never (conversion is trivial)
+    #[inline]
     fn try_from_bits(bits: u32) -> Result<Self, Self::Error> {
         if bits > 0x3FFFF {
             return Err(anyhow::anyhow!(
@@ -125,6 +127,7 @@ impl Conversion<u32> for Pgn {
     /// # Errors
     /// - If failed to parse input hexadecimal string slice.
     /// - If value out of range for valid 18-bit PGNs.
+    #[inline]
     fn try_from_hex(hex_str: &str) -> Result<Self, Self::Error> {
         let bits = u32::from_str_radix(hex_str, 16).map_err(anyhow::Error::msg)?;
         if bits > 0x3FFFF {
@@ -136,13 +139,15 @@ impl Conversion<u32> for Pgn {
     }
 
     /// Creates a new 32-bit integer from the [`Pgn`] bitfield.
+    #[inline]
     fn into_bits(self) -> u32 {
-        self.into_bits()
+        self.0
     }
 
     /// Creates a new base-16 (hex) `String` from the [`Pgn`] bitfield.
     /// # Requires
     /// - `alloc`
+    #[inline]
     #[cfg(feature = "alloc")]
     fn into_hex(self) -> String {
         format(format_args!("{:05X}", self.into_bits()))
@@ -155,6 +160,7 @@ impl Pgn {
     /// # Returns
     /// - `PduFormat::Pdu1(bits)` if the PDU format value is less than 240.
     /// - `PduFormat::Pdu2(bits)` otherwise.
+    #[inline]
     #[must_use]
     pub const fn pdu_format(&self) -> PduFormat {
         match (self.pdu_format_bits() < 240, self.pdu_format_bits()) {
@@ -168,6 +174,7 @@ impl Pgn {
     /// # Returns
     /// - `GroupExtension::None` if the PDU format is `Pdu1`.
     /// - `GroupExtension::Some(bits)` if the PDU format is `Pdu2`.
+    #[inline]
     #[must_use]
     pub const fn group_extension(&self) -> GroupExtension {
         match self.pdu_format() {
@@ -181,6 +188,7 @@ impl Pgn {
     /// # Returns
     /// - `DestinationAddress::Some(bits)` if the PDU format is `Pdu1`.
     /// - `DestinationAddress::None` if the PDU format is `Pdu2`.
+    #[inline]
     #[must_use]
     pub const fn destination_address(&self) -> DestinationAddr {
         match self.pdu_format() {
@@ -194,6 +202,7 @@ impl Pgn {
     /// # Returns
     /// - `CommunicationMode::P2P` if the PDU format is `Pdu1`.
     /// - `CommunicationMode::Broadcast` if the PDU format is `Pdu2`.
+    #[inline]
     #[must_use]
     pub const fn communication_mode(&self) -> CommunicationMode {
         match self.pdu_format() {
@@ -207,6 +216,7 @@ impl Pgn {
     /// # Returns
     /// - `true` if the communication mode is `P2P`.
     /// - `false` if the communication mode is `Broadcast`.
+    #[inline]
     #[must_use]
     pub const fn is_p2p(&self) -> bool {
         match self.communication_mode() {
@@ -220,6 +230,7 @@ impl Pgn {
     /// # Returns
     /// - `true` if the communication mode is `Broadcast`.
     /// - `false` if the communication mode is `P2P`.
+    #[inline]
     #[must_use]
     pub const fn is_broadcast(&self) -> bool {
         match self.communication_mode() {
@@ -255,6 +266,7 @@ impl Id<J1939> {
     ///
     /// # Returns
     /// The combined PGN bitfield value.
+    #[inline]
     #[must_use]
     pub const fn pgn_bits(&self) -> u32 {
         let pgn_bitfield = Pgn::new()
@@ -263,13 +275,14 @@ impl Id<J1939> {
             .with_pdu_format_bits(self.pdu_format())
             .with_pdu_specific_bits(self.pdu_specific());
 
-        pgn_bitfield.into_bits()
+        pgn_bitfield.0
     }
 
     /// Constructs and returns a [`Pgn`] struct based on the 29-bit identifier fields.
     ///
     /// # Returns
     /// A [`Pgn`] bitfield initialized with the 29-bit identifier fields.
+    #[inline]
     #[must_use]
     pub const fn pgn(&self) -> Pgn {
         Pgn::new()
