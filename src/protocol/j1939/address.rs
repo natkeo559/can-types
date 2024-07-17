@@ -16,64 +16,181 @@ if_alloc! {
 /// specific ECU or system component that communicates over the network.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Addr {
+    /// Primary Engine Controller | (CPC, ECM)
     PrimaryEngineController,
+
+    /// Secondary Engine Controller | (MCM, ECM #2)
     SecondaryEngineController,
+
+    /// Primary Transmission Controller | (TCM)
     PrimaryTransmissionController,
+
+    /// Transmission Shift Selector | (TSS)
     TransmissionShiftSelector,
+
+    /// Brakes | System Controller (ABS)
     Brakes,
+
+    /// Retarder
     Retarder,
+
+    /// Cruise Control | (IPM, PCC)
     CruiseControl,
+
+    /// Fuel System | Controller (CNG)
     FuelSystem,
+
+    /// Steering Controller | (SAS)
     SteeringController,
+
+    /// Instrument Guage Cluster (EGC) | (ICU, RX)
     InstrumentCluster,
+
+    /// Climate Control #1 | (FCU)
     ClimateControl1,
+
+    /// Compass
     Compass,
+
+    /// Body Controller | (SSAM, SAM-CAB, BHM)
     BodyController,
+
+    /// Off-Vehicle Gateway | (CGW)
     OffVehicleGateway,
+
+    /// Vehicle Information Display | Driver Information Display
     DidVid,
+
+    /// Retarder, Exhaust, Engine #1
     RetarderExhaustEngine1,
+
+    /// Headway Controller | (RDF) | (OnGuard)
     HeadwayController,
+
+    /// Suspension | System Controller (ECAS)
     Suspension,
+
+    /// Cab Controller | Primary (MSF, SHM, ECC)
     CabController,
+
+    /// Tire Pressure Controller | (TPMS)
     TirePressureController,
+
+    /// Lighting Control Module | (LCM)
     LightingControlModule,
+
+    /// Climate Control #2 | Rear HVAC | (ParkSmart)
     ClimateControl2,
+
+    /// Exhaust Emission Controller | (ACM) | (DCU)
     ExhaustEmissionController,
+
+    /// Auxiliary Heater | (ACU)
     AuxiliaryHeater,
+
+    /// Chassis Controller | (CHM, SAM-Chassis)
     ChassisController,
+
+    /// Communications Unit | Cellular (CTP, VT)
     CommunicationsUnit,
+
+    /// Radio
     Radio,
+
+    /// Safety Restraint System | Air Bag | (SRS)
     SafetyRestraintSystem,
+
+    /// Aftertreatment Control Module | (ACM)
     AftertreatmentControlModule,
+
+    /// Multi-Purpose Camera | (MPC)
     MultiPurposeCamera,
+
+    /// Switch Expansion Module | (SEM #1)
     SwitchExpansionModule,
+
+    /// Auxiliary Gauge Switch Pack | (AGSP3)
     AuxillaryGaugeSwitchPack,
+
+    /// Iteris
     Iteris,
+
+    /// Qualcomm - PeopleNet Translator Box
     QualcommPeopleNetTranslatorBox,
+
+    /// Stand-Alone Real Time Clock | (SART)
     StandAloneRealTimeClock,
+
+    /// Center Panel MUX Switch Pack #1
     CenterPanel1,
+
+    /// Center Panel MUX Switch Pack #2
     CenterPanel2,
+
+    /// Center Panel MUX Switch Pack #3
     CenterPanel3,
+
+    /// Center Panel MUX Switch Pack #4
     CenterPanel4,
+
+    /// Center Panel MUX Switch Pack #5
     CenterPanel5,
+
+    /// Wabco OnGuard Radar | OnGuard Display | Collision Mitigation System
     WabcoOnGuardRadar,
+
+    /// Secondary Instrument Cluster | (SIC)
     SecondaryInstrumentCluster,
+
+    /// Offboard Diagnostics
     OffboardDiagnostics,
+
+    /// Trailer #3 Bridge
     Trailer3Bridge,
+
+    /// Trailer #2 Bridge
     Trailer2Bridge,
+
+    /// Trailer #1 Bridge
     Trailer1Bridge,
+
+    /// Bendix Camera | Safety Direct Processor (SDP) Module
     SafetyDirectProcessor,
+
+    /// Forward Road Image Processor | PAM Module | Lane Departure Warning (LDW) Module | (VRDU)
     ForwardRoadImageProcessor,
+
+    /// Left Rear Door Pod
     LeftRearDoorPod,
+
+    /// Right Rear Door Pod
     RightRearDoorPod,
+
+    /// Door Controller #1
     DoorController1,
+
+    /// Door Controller #2
     DoorController2,
+
+    /// Tachograph | (TCO)
     Tachograph,
+
+    /// Hybrid System
     HybridSystem,
+
+    /// Auxiliary Power Unit | (APU)
     AuxiliaryPowerUnit,
+
+    /// Service Tool
     ServiceTool,
+
+    /// Source Address Request 0
     SourceAddressRequest0,
+
+    /// Source Address Request 1
     SourceAddressRequest1,
+
+    /// Unknown or unlisted address
     Unknown(u8),
 }
 
