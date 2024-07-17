@@ -15,7 +15,7 @@
 
 //! Defines the `Id` type representing a Controller Area Network (CAN) identifier
 //! specific to a protocol.
-//! 
+//!
 //! Generics are employed here for flexibility and performance benefits. By parameterizing [`Id`]
 //! over different protocol types (P) that conform to the [`IsProtocol`] trait, Rust's
 //! monomorphization ensures efficient code generation at compile-time while avoiding namespace

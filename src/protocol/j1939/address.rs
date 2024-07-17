@@ -19,8 +19,8 @@ if_alloc! {
     use crate::alloc::fmt::{Display, Formatter, Result};
 }
 
-/// The [`Addr`] enum represents various types of electronic control units (ECUs) and modules 
-/// commonly found in automotive and heavy-duty vehicle networks. Each variant corresponds to a 
+/// The [`Addr`] enum represents various types of electronic control units (ECUs) and modules
+/// commonly found in automotive and heavy-duty vehicle networks. Each variant corresponds to a
 /// specific ECU or system component that communicates over the network.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Addr {
