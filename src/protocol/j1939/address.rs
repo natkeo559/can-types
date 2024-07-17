@@ -1,17 +1,9 @@
-// Copyright (C) 2024  Nathan H. Keough
+// Copyright (c) 2024 Nathan H. Keough
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This work is dual-licensed under MIT OR Apache 2.0 (or any later version).
+// You may choose between one of them if you use this work.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// For further detail, please refer to the individual licenses located at the root of this crate.
 
 //! # Vehicle Control Units/Modules, Source Adresses, and Destination Addresses
 
