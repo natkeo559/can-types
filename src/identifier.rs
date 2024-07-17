@@ -13,6 +13,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//! Defines the `Id` type representing a Controller Area Network (CAN) identifier
+//! specific to a protocol.
+//! 
+//! Generics are employed here for flexibility and performance benefits. By parameterizing [`Id`]
+//! over different protocol types (P) that conform to the [`IsProtocol`] trait, Rust's
+//! monomorphization ensures efficient code generation at compile-time while avoiding namespace
+//! pollution from dozens of individual types.
+
+/// Marks a type, relating it to a specific protocol.
 pub trait IsProtocol {}
 
 /// Represents a Controller Area Network (CAN) identifier of a specific protocol.

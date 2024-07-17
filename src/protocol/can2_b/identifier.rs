@@ -1,3 +1,20 @@
+// Copyright (C) 2024  Nathan H. Keough
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+//! The extended CAN2.0 specification with a 29-bit identifier.
+
 if_alloc! {
     use crate::alloc::{string::String, fmt::format};
 }
@@ -13,10 +30,10 @@ use crate::{
 ///
 /// ### Repr: `u32`
 ///
-/// | Field                  | Size (bits) |
-/// |------------------------|-------------|
-/// | Padding bits (private) | 3           |
-/// | Identifier bits        | 29          |
+/// | Field      | Size (bits) |
+/// |------------|-------------|
+/// | Padding    | 3           |
+/// | Identifier | 29          |
 #[bitfield(u32, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Can2B {

@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//! Defines the standard conversion between units of data provided in this crate.
+
 use crate::{
     payload::{Data, Name, Pdu},
     protocol::{can2_a::identifier::IdCan2A, can2_b::identifier::IdCan2B},

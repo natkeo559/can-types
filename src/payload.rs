@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//! Defines various PDU contents, including generic `Data` or the `Name` fields.
+
 if_alloc! {
     use crate::alloc::{string::String, fmt::format};
 }
@@ -21,22 +23,23 @@ use bitfield_struct::bitfield;
 
 use crate::conversion::Conversion;
 
+/// Marks a type, associating it with a protocol data unit (PDU)
 pub trait IsDataUnit {}
 
 /// Bitfield representing an 8-byte data field.
 ///
 /// ### Repr `u64`
 ///
-/// | Field            | Size (bits) |
-/// |------------------|-------------|
-/// | byte 0           | 8           |
-/// | byte 1           | 8           |
-/// | byte 2           | 8           |
-/// | byte 3           | 8           |
-/// | byte 4           | 8           |
-/// | byte 5           | 8           |
-/// | byte 6           | 8           |
-/// | byte 7           | 8           |
+/// | Field  | Size (bits) |
+/// |--------|-------------|
+/// | byte 0 | 8           |
+/// | byte 1 | 8           |
+/// | byte 2 | 8           |
+/// | byte 3 | 8           |
+/// | byte 4 | 8           |
+/// | byte 5 | 8           |
+/// | byte 6 | 8           |
+/// | byte 7 | 8           |
 #[bitfield(u64, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Data {
@@ -58,24 +61,24 @@ pub struct Data {
     byte_7_bits: u8,
 }
 
-/// Represents a Name in the SAE J1939 protocol.
+/// Represents a `Name` in the SAE J1939 protocol.
 ///
-/// The Name structure is used in the SAE J1939 protocol to represent the identity of a device or
+/// The `Name` structure is used in the SAE J1939 protocol to represent the identity of a device or
 /// component within a vehicle's network.
 ///
 /// ### Repr: `u64`
-/// | Field                             | Size (bits) |
-/// |-----------------------------------|-------------|
-/// | Arbitrary address bits            | 1           |
-/// | Industry group bits               | 3           |
-/// | Vehicle system instance bits      | 4           |
-/// | Vehicle system bits               | 7           |
-/// | Reserved bits                     | 1           |
-/// | Function bits                     | 8           |
-/// | Function instance bits            | 5           |
-/// | ECU instance bits                 | 3           |
-/// | Manufacturer code bits            | 11          |
-/// | Identity number bits              | 21          |
+/// | Field                   | Size (bits) |
+/// |-------------------------|-------------|
+/// | Arbitrary Address       | 1           |
+/// | Industry Group          | 3           |
+/// | Vehicle System Instance | 4           |
+/// | Vehicle system          | 7           |
+/// | Reserved                | 1           |
+/// | Function                | 8           |
+/// | Function Instance       | 5           |
+/// | ECU Instance            | 3           |
+/// | Manufacturer Code       | 11          |
+/// | Identity Number         | 21          |
 #[bitfield(u64, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Name {

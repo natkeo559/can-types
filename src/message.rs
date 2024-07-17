@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//! Defines a CAN message (Identifier with associated PDU).
+
 use crate::{
     conversion::Conversion,
     identifier::{Id, IsProtocol},
@@ -20,6 +22,7 @@ use crate::{
     protocol::j1939::identifier::J1939,
 };
 
+/// Represents a CAN message with its associated identifier ([`Id`]) and protocol data unit ([`Pdu`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Message<P: IsProtocol, U: IsDataUnit> {
     id: Id<P>,

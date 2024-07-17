@@ -1,3 +1,20 @@
+// Copyright (C) 2024  Nathan H. Keough
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+//! The J1939 specification with a 29-bit identifier.
+
 if_alloc! {
     use crate::alloc::{string::String, fmt::format};
 }
@@ -15,15 +32,15 @@ use super::address::SourceAddr;
 ///
 /// ### Repr: `u32`
 ///
-/// | Field                  | Size (bits) |
-/// |------------------------|-------------|
-/// | Padding bits (private) | 3           |
-/// | Priority bits          | 3           |
-/// | Reserved bits          | 1           |
-/// | Data page bits         | 1           |
-/// | PDU format bits        | 8           |
-/// | PDU specific bits      | 8           |
-/// | Source address bits    | 8           |
+/// | Field          | Size (bits) |
+/// |----------------|-------------|
+/// | Padding        | 3           |
+/// | Priority       | 3           |
+/// | Reserved       | 1           |
+/// | Data Page      | 1           |
+/// | PDU Format     | 8           |
+/// | PDU Specific   | 8           |
+/// | Source Address | 8           |
 #[bitfield(u32, order = Msb)]
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct J1939 {

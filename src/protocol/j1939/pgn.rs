@@ -13,6 +13,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//! # J1939 Parameter Group Number (PGN)
+//! 
+//! **Description:**
+//! The Parameter Group Number (PGN) is a key component in the J1939 protocol that identifies a specific data group
+//! within the CAN bus network. Each PGN corresponds to a particular type of message or data set, facilitating structured
+//! communication between electronic control units (ECUs) in a vehicle or machine.
+//! 
+//! - **Function:** PGNs categorize and standardize the types of messages transmitted over the J1939 network, allowing
+//!   different devices to understand and process the data correctly.
+//! - **Format:** PGNs are 18-bit identifiers, which are part of the 29-bit extended frame format. The structure
+//!   of a PGN includes fields such as the priority, data page, and parameter group number itself.
+//! - **Usage:** Each PGN represents a different parameter group, such as engine parameters, vehicle diagnostics,
+//!   or environmental data. For example, a specific PGN might be used to report engine temperature, while another
+//!   could be used for transmission status.
+//! 
+//! **Examples of PGNs:**
+//! - *PGN 61444:* Provides information on the engine temperature.
+//! - *PGN 65265:* Transmits data related to the vehicle's diagnostic information.
+//! 
+//! **Source Documents:**
+//! - *SAE J1939-21*
+//! - *SAE J1939-71*
+
 if_alloc! {
     use crate::alloc::{string::String, fmt::format};
 }
@@ -71,13 +94,13 @@ pub enum GroupExtension {
 ///
 /// ### Repr: `u32`
 ///
-/// | Field                  | Size (bits) |
-/// |------------------------|-------------|
-/// | Padding bits (private) | 14          |
-/// | Reserved bits          | 1           |
-/// | Data page bits         | 1           |
-/// | PDU format bits        | 8           |
-/// | PDU specific bits      | 8           |
+/// | Field        | Size (bits) |
+/// |--------------|-------------|
+/// | Padding      | 14          |
+/// | Reserved     | 1           |
+/// | Data Page    | 1           |
+/// | PDU Format   | 8           |
+/// | PDU Specific | 8           |
 #[bitfield(u32, order = Msb, conversion = false)]
 #[derive(PartialEq, Eq)]
 pub struct Pgn {
