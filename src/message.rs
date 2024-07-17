@@ -5,6 +5,8 @@
 //
 // For further detail, please refer to the individual licenses located at the root of this crate.
 
+//! Defines a CAN message (Identifier with associated PDU).
+
 use crate::{
     conversion::Conversion,
     identifier::{Id, IsProtocol},
